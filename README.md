@@ -8,13 +8,13 @@ Simple repo pour ré-installer plus vite un ordinateur neuf (macOS, Windows, Lin
 
 Télécharger la dernière release compilée :
 ```bash
-curl -fsSL -o init_mac.tar.gz \
-  https://github.com/axgd-code/init_mac/releases/download/$(curl -s https://api.github.com/repos/axgd-code/init_mac/releases/latest | grep tag_name | cut -d'"' -f4)/compiled-scripts.tar.gz
-tar -xzf init_mac.tar.gz
+curl -fsSL -o init_computer.tar.gz \
+  https://github.com/axgd-code/init_computer/releases/download/$(curl -s https://api.github.com/repos/axgd-code/init_computer/releases/latest | grep tag_name | cut -d'"' -f4)/compiled-scripts.tar.gz
+tar -xzf init_computer.tar.gz
 bash init.sh
 ```
 
-Ou télécharger manuellement depuis [releases](https://github.com/axgd-code/init_mac/releases), puis :
+Ou télécharger manuellement depuis [releases](https://github.com/axgd-code/init_computer/releases), puis :
 ```bash
 cd dist/
 bash init.sh
@@ -24,8 +24,8 @@ bash init.sh
 
 Cloner et exécuter depuis les sources :
 ```bash
-git clone https://github.com/axgd-code/init_mac.git
-cd init_mac
+git clone https://github.com/axgd-code/init_computer.git
+cd init_computer
 bash src/init.sh
 ```
 

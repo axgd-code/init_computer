@@ -1,4 +1,4 @@
-# init mac
+# init_computer
 
 Simple repo pour ré-installer plus vite un ordinateur neuf (macOS, Windows, Linux).
 

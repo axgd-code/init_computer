@@ -1,0 +1,24 @@
+# Configuration locale
+.env.local
+
+# Logs
+*.log
+update.log
+update_error.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Node
+node_modules/
+.npm
+
+# Backups
+*.backup
+*.bak
+*~

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 echo "Configuration de la mise à jour automatique quotidienne à 21h00"
 

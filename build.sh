@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 set -euo pipefail
 
@@ -23,9 +23,23 @@ compile_script() {
   local script_path="$1"
   local base
   base="$(basename "${script_path}")"
-  # shc génère <base>.x et <base>.x.c; on place le binaire final dans dist/<base>
-  shc -f "${script_path}" -o "${DIST_DIR}/${base}" >/dev/null
-  rm -f "${DIST_DIR}/${base}.x.c" "${DIST_DIR}/${base}.x" 2>/dev/null || true
+  local out="${DIST_DIR}/${base}"
+  
+  # shc crée le binaire et des fichiers temporaires
+  # On ignore les warnings et on nettoie après
+  shc -f "${script_path}" -i /bin/bash -o "${out}" 2>/dev/null || true
+  
+  # Nettoyer les fichiers générés non-utiles
+  rm -f "${out}.x.c" "${out}.x" 2>/dev/null || true
+  
+  # Vérifier que le binaire existe
+  if [ -f "${out}" ]; then
+    chmod +x "${out}"
+    return 0
+  else
+    echo "Erreur: ${script_path} n'a pas pu être compilé" >&2
+    return 1
+  fi
 }
 
 for script in "${SRC_DIR}"/*.sh; do

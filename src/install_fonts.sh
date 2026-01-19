@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 echo "Installation des fonts…"
 brew tap homebrew/cask-fonts
 FONTS=(

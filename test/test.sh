@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # Quick sanity checks for all repo scripts.
 # - bash -n for syntax

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PACKAGES_CONF="${SCRIPT_DIR}/packages.conf"

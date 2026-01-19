@@ -1,6 +1,9 @@
 # Configuration locale
 .env.local
 
+# Build artifacts
+/dist/
+
 # Logs
 *.log
 update.log

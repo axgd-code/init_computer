@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 echo "=== Mise à jour automatique des packages - $(date) ==="
 

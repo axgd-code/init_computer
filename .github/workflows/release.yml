@@ -19,10 +19,17 @@ jobs:
       - name: Build compiled scripts
         run: bash build.sh
 
+      - name: Create archive
+        run: |
+          cd dist
+          tar -czf ../compiled-scripts.tar.gz *
+          cd ..
+          ls -lh compiled-scripts.tar.gz
+
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/*
+          files: compiled-scripts.tar.gz
           draft: false
           prerelease: false
         env:

@@ -16,7 +16,7 @@ bash init.sh
 
 Ou télécharger manuellement depuis [releases](https://github.com/axgd-code/init_computer/releases), puis :
 ```bash
-cd dist/
+tar -xzf compiled-scripts.tar.gz
 bash init.sh
 ```
 

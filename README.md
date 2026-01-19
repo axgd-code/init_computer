@@ -1,22 +1,22 @@
-# init_computer
+# init_mac
 
 Simple repo pour ré-installer plus vite un ordinateur neuf (macOS, Windows, Linux).
 
 ## Installation rapide
 
-### Via les releases compilées (recommandé)
+### Via les releases (recommandé)
 
-Télécharger la dernière release compilée :
+Télécharger la dernière release :
 ```bash
-curl -fsSL -o init_computer.tar.gz \
-  https://github.com/axgd-code/init_computer/releases/download/$(curl -s https://api.github.com/repos/axgd-code/init_computer/releases/latest | grep tag_name | cut -d'"' -f4)/compiled-scripts.tar.gz
-tar -xzf init_computer.tar.gz
+curl -fsSL -o init-mac.tar.gz \
+  https://github.com/axgd-code/init_mac/releases/download/$(curl -s https://api.github.com/repos/axgd-code/init_mac/releases/latest | grep tag_name | cut -d'"' -f4)/init-mac-scripts.tar.gz
+tar -xzf init-mac.tar.gz
 bash init.sh
 ```
 
-Ou télécharger manuellement depuis [releases](https://github.com/axgd-code/init_computer/releases), puis :
+Ou télécharger manuellement depuis [releases](https://github.com/axgd-code/init_mac/releases), puis :
 ```bash
-tar -xzf compiled-scripts.tar.gz
+tar -xzf init-mac-scripts.tar.gz
 bash init.sh
 ```
 
@@ -24,8 +24,8 @@ bash init.sh
 
 Cloner et exécuter depuis les sources :
 ```bash
-git clone https://github.com/axgd-code/init_computer.git
-cd init_computer
+git clone https://github.com/axgd-code/init_mac.git
+cd init_mac
 bash src/init.sh
 ```
 
@@ -376,16 +376,15 @@ Le script vérifie :
 
 ### Build local
 
-Compiler les scripts localement (nécessite `shc`) :
+Créer une archive locale des scripts :
 ```bash
-bash build.sh
+tar -czf init-mac-scripts.tar.gz -C src .
 ```
-Les binaires et configuration apparaissent dans [dist](dist).
 
 ### GitHub Actions CI
 
-- [.github/workflows/ci.yml](.github/workflows/ci.yml) : à chaque push, compile et publie `compiled-scripts` comme artefact
-- [.github/workflows/release.yml](.github/workflows/release.yml) : à chaque tag `v*`, crée une release GitHub avec les binaires compilés
+- [.github/workflows/ci.yml](.github/workflows/ci.yml) : à chaque push, compile et publie les scripts comme artefact
+- [.github/workflows/release.yml](.github/workflows/release.yml) : à chaque tag `v*`, crée une release GitHub avec les scripts
 
 ### Créer une release
 
@@ -393,11 +392,11 @@ Les binaires et configuration apparaissent dans [dist](dist).
 2. Commiter
 3. Créer un tag et pousser :
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.0.1
+git push origin v1.0.1
 ```
 
-GitHub Actions compile et publie la release automatiquement.
+GitHub Actions crée la release automatiquement.
 
 ## License
 

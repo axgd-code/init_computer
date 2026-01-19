@@ -11,25 +11,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install shc
+      - name: Create source archive
         run: |
-          sudo apt-get update
-          sudo apt-get install -y shc
-
-      - name: Build compiled scripts
-        run: bash build.sh
-
-      - name: Create archive
-        run: |
-          cd dist
-          tar -czf ../compiled-scripts.tar.gz *
+          mkdir -p release
+          cp -r src/* release/
+          cd release
+          tar -czf ../init-mac-scripts.tar.gz *
           cd ..
-          ls -lh compiled-scripts.tar.gz
+          ls -lh init-mac-scripts.tar.gz
 
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
-          files: compiled-scripts.tar.gz
+          files: init-mac-scripts.tar.gz
           draft: false
           prerelease: false
         env:

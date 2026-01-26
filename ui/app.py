@@ -144,6 +144,28 @@ def api_env():
         set_key(str(ENV_LOCAL), k, str(v))
     return jsonify({'status':'ok'})
 
+
+@app.route('/api/env/exists')
+def api_env_exists():
+    try:
+        return jsonify({'exists': ENV_LOCAL.exists()})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/env/init', methods=['POST'])
+def api_env_init():
+    try:
+        # If an example file exists, copy it as a starting point
+        if ENV_EXAMPLE.exists():
+            ENV_LOCAL.write_text(ENV_EXAMPLE.read_text())
+        else:
+            # create an empty .env.local
+            ENV_LOCAL.write_text('')
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/packages')
 def api_packages():
     pkgs=read_packages()
@@ -278,6 +300,20 @@ def api_action_install():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/api/action/import-installed', methods=['POST'])
+def api_action_import_installed():
+    # Run bash src/import_installed.sh
+    script = BASE_DIR / 'src' / 'import_installed.sh'
+    if not script.exists():
+        return jsonify({'error':'import_installed.sh script not found'}), 500
+    try:
+        cmd = ['bash', str(script)]
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        return jsonify({'stdout': res.stdout, 'stderr': res.stderr, 'code': res.returncode})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/action/wifi-export', methods=['POST'])
 def api_action_wifi_export():
     data = request.json or {}
@@ -337,9 +373,45 @@ if __name__=='__main__':
     t = threading.Thread(target=start_server, args=(port,), daemon=True)
     t.start()
 
-    # Determine if we are running in a built executable or dev mode
-    # If dev mode, maybe don't open webview if FLASK_DEBUG is on? 
-    # But user wants standalone.
-    
-    window = webview.create_window('ok_computer', f'http://localhost:{port}')
+    # Provide a small JS API to open native file/folder dialogs when running
+    # inside the pywebview window. Fall back to prompt in browsers.
+    class FileDialogApi:
+        def __init__(self):
+            # Window will be set after creation
+            self.window = None
+
+        def open_file(self, title="Select file"):
+            try:
+                # Use pywebview native dialog if available
+                if self.window:
+                    res = webview.create_file_dialog(self.window, webview.OPEN_DIALOG)
+                    # pywebview returns a list for multiple selections
+                    if isinstance(res, (list, tuple)):
+                        return res[0] if res else ""
+                    return res or ""
+            except Exception:
+                pass
+            return ""
+
+        def open_dir(self, title="Select folder"):
+            try:
+                if self.window:
+                    res = webview.create_file_dialog(self.window, webview.FOLDER_DIALOG)
+                    if isinstance(res, (list, tuple)):
+                        return res[0] if res else ""
+                    return res or ""
+            except Exception:
+                pass
+            return ""
+
+    api = FileDialogApi()
+
+    # Create webview window and expose the API to JS via `window.pywebview.api`
+    try:
+        window = webview.create_window('ok_computer', f'http://localhost:{port}', js_api=api)
+        api.window = window
+    except TypeError:
+        # Older pywebview versions or contexts where js_api isn't supported
+        window = webview.create_window('ok_computer', f'http://localhost:{port}')
+
     webview.start()

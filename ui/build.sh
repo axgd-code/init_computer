@@ -11,7 +11,8 @@ cd "$HERE"
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -U pip
-pip install -r requirements.txt
+# Install runtime and build requirements (build-only deps in requirements.conf)
+pip install -r requirements.txt -r requirements.conf
 
 # Determine add-data separator (':' on Unix, ';' on Windows)
 SEP=:
@@ -21,7 +22,7 @@ case "$(uname -s)" in
 esac
 
 # Run PyInstaller including templates and static folders
-python -m PyInstaller --name "$NAME" --onefile \
+python -m PyInstaller --name "$NAME" --onefile --noconfirm --clean \
   --noconsole \
   --add-data "templates${SEP}templates" \
   --add-data "static${SEP}static" \

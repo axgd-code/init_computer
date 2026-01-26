@@ -26,20 +26,137 @@ async function loadEnv() {
     data.forEach(item => {
         const div = document.createElement('div');
         div.className = 'env-item';
-        
+
+        const key = item.key;
+        const val = item.value == null ? '' : item.value;
+        const desc = item.desc || '';
+
+        // Infer type from key name and value
+        function inferType(key, value) {
+            const k = key.toUpperCase();
+            const v = (value || '').toString().toLowerCase();
+            if (/(_DIR|_PATH|_FILE|VAULT|CONFIG|DB|KEY_FILE)/i.test(k)) {
+                if (/_FILE$/i.test(k) || /_KEY_FILE$/i.test(k)) return {type: 'path', mode: 'file'};
+                if (/_DIR$/i.test(k) || /_DIR\b/i.test(k)) return {type: 'path', mode: 'dir'};
+                return {type: 'path', mode: 'any'};
+            }
+            if (v === 'true' || v === 'false' || v === '0' || v === '1') return {type: 'boolean'};
+            if (k.match(/(HOUR|MINUTE|PORT|COUNT|NUM|SIZE|SECONDS|DAYS)/)) return {type: 'number'};
+            if (/^\d+$/.test(v)) return {type: 'number'};
+            return {type: 'string'};
+        }
+
+        const info = inferType(key, val);
+
+        // Build inner HTML per type
+        let inputHtml = '';
+        if (info.type === 'boolean') {
+            const checked = (val === 'true' || val === '1') ? 'checked' : '';
+            inputHtml = `<input type="checkbox" data-key="${key}" ${checked}>`;
+        } else if (info.type === 'number') {
+            let attrs = '';
+            if (key.toUpperCase().includes('HOUR')) attrs = 'min="0" max="23"';
+            if (key.toUpperCase().includes('MINUTE')) attrs = 'min="0" max="59"';
+            inputHtml = `<input type="number" data-key="${key}" value="${val}" ${attrs}>`;
+        } else if (info.type === 'path') {
+            // show text input + browse button (browse uses prompt as fallback)
+            inputHtml = `<div style="display:flex;gap:8px;align-items:center;"><input type="text" data-key="${key}" value="${val}" style="flex:1"><button type="button" class="secondary" data-browse-for="${key}">Parcourir</button></div>`;
+        } else {
+            inputHtml = `<input type="text" data-key="${key}" value="${val}">`;
+        }
+
         div.innerHTML = `
-            <label class="env-label">${item.key}</label>
-            <div class="env-desc">${item.desc || ''}</div>
-            <input type="text" data-key="${item.key}" value="${item.value || ''}">
+            <label class="env-label">${key}</label>
+            <div class="env-desc">${desc}</div>
+            ${inputHtml}
         `;
         container.appendChild(div);
     });
+
+    // Attach browse handlers. Prefer native pywebview dialogs when available,
+    // otherwise fall back to a simple `prompt`.
+    container.querySelectorAll('button[data-browse-for]').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const key = btn.dataset.browseFor;
+            const input = container.querySelector(`input[data-key="${key}"]`);
+            if (!input) return;
+
+            const isFile = /_FILE$|KEY_FILE/i.test(key);
+            const isDir = /_DIR$|VAULT|CONFIG|SYNC_DIR/i.test(key);
+
+            // If running inside pywebview, use the exposed API
+            if (window.pywebview && window.pywebview.api) {
+                try {
+                    let path = '';
+                    if (isDir) {
+                        path = await window.pywebview.api.open_dir(`Select folder for ${key}`);
+                    } else {
+                        path = await window.pywebview.api.open_file(`Select file for ${key}`);
+                    }
+                    if (path) input.value = path;
+                    return;
+                } catch (err) {
+                    // fall through to prompt fallback
+                }
+            }
+
+            // Browser or fallback
+            const current = input.value || '';
+            const chosen = prompt('Entrez le chemin pour ' + key, current);
+            if (chosen !== null) input.value = chosen;
+        });
+    });
+
+    // If .env.local does not exist, show init button
+    try {
+        const existsRes = await fetch('/api/env/exists');
+        const existsData = await existsRes.json();
+        if (!existsData.exists) {
+            const initDiv = document.createElement('div');
+            initDiv.style.marginTop = '10px';
+            initDiv.innerHTML = `<button id="btn-init-env" class="secondary">Initialiser .env.local</button> <span style="color:#888; font-size:12px; margin-left:8px;">Crée .env.local à partir de .env.example</span>`;
+            container.prepend(initDiv);
+            document.getElementById('btn-init-env').addEventListener('click', async () => {
+                if (!confirm('Créer .env.local à partir de .env.example ?')) return;
+                const btn = document.getElementById('btn-init-env');
+                btn.disabled = true;
+                btn.innerText = 'Initialisation...';
+                try {
+                    const r = await fetch('/api/env/init', {method: 'POST'});
+                    const j = await r.json();
+                    if (j.error) alert('Erreur: ' + j.error);
+                    else {
+                        alert('.env.local créé');
+                        // reload form
+                        loadEnv();
+                    }
+                } catch (e) {
+                    alert('Request failed: ' + e);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = 'Initialiser .env.local';
+                }
+            });
+        }
+    } catch (e) {
+        // ignore existence check failures
+    }
 }
 
 async function saveEnv() {
     const inputs = document.querySelectorAll('#env-form input');
     const data = {};
-    inputs.forEach(i => data[i.dataset.key] = i.value);
+    inputs.forEach(i => {
+        const key = i.dataset.key;
+        if (!key) return;
+        if (i.type === 'checkbox') {
+            data[key] = i.checked ? 'true' : 'false';
+        } else if (i.type === 'number') {
+            data[key] = i.value.toString();
+        } else {
+            data[key] = i.value;
+        }
+    });
     
     await fetch('/api/env', {
         method: 'POST',
@@ -130,8 +247,24 @@ async function runUpdate() {
 }
 
 async function importInstalled() {
-    // Placeholder: currently calls update.sh? No, we need import_installed.sh
-    alert("This feature triggers 'src/import_installed.sh' (not fully wired in API yet, assuming bash access)");
+    const btn = document.querySelector('button[onclick="importInstalled()"]');
+    const originalText = btn ? btn.innerText : '';
+    if(btn) { btn.disabled = true; btn.innerText = t('running'); }
+
+    try {
+        const res = await fetch('/api/action/import-installed', { method: 'POST' });
+        const data = await res.json();
+        console.log(data);
+        if(data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            alert('Exit Code: ' + data.code + '\n\nSTDOUT:\n' + (data.stdout || '').slice(0,2000) + '\n\nSTDERR:\n' + (data.stderr || '').slice(0,2000));
+        }
+    } catch(e) {
+        alert('Request failed: ' + e);
+    } finally {
+        if(btn) { btn.disabled = false; btn.innerText = originalText; }
+    }
 }
 
 // SEARCH

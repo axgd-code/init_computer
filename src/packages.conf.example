@@ -1,7 +1,7 @@
-# Configuration unifiée des packages
-# Format: TYPE|NOM_MAC|NOM_WINDOWS|DESCRIPTION
-# TYPE: brew, cask, tap, mas (pour macOS uniquement)
-# Si un package n'existe pas sur une plateforme, mettre "-"
+# Unified package configuration
+# Format: TYPE|MAC_NAME|WIN_NAME|DESCRIPTION
+# TYPE: brew, cask, tap, mas (macOS only)
+# If a package does not exist on a platform, use "-"
 
 # Taps (macOS uniquement)
 tap|buo/cask-upgrade|-|Brew cask upgrade

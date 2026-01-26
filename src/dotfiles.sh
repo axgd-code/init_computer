@@ -2,26 +2,26 @@
 
 set -e
 
-# Couleurs
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# Obtenir le répertoire du script
+# Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="${SCRIPT_DIR}/.env.local"
 ENV_EXAMPLE="${SCRIPT_DIR}/.env.example"
 
-# Charger la configuration
+# Load configuration
 load_config() {
     if [ ! -f "${ENV_FILE}" ]; then
-        echo -e "${YELLOW}⚠ Le fichier ${ENV_FILE} n'existe pas${NC}"
-        echo -e "${BLUE}Création depuis le template...${NC}"
+        echo -e "${YELLOW}⚠ The file ${ENV_FILE} does not exist${NC}"
+        echo -e "${BLUE}Creating from template...${NC}"
         cp "${ENV_EXAMPLE}" "${ENV_FILE}"
-        echo -e "${GREEN}✓ Fichier créé${NC}"
-        echo -e "${YELLOW}⚠ Veuillez éditer ${ENV_FILE} et configurér SYNC_DIR${NC}"
+        echo -e "${GREEN}✓ File created${NC}"
+        echo -e "${YELLOW}⚠ Please edit ${ENV_FILE} and configure SYNC_DIR${NC}"
         return 1
     fi
     
@@ -29,7 +29,7 @@ load_config() {
     source "${ENV_FILE}"
 }
 
-# Afficher l'aide
+# Show help
 show_help() {
     cat << EOF
 ${BLUE}Usage:${NC} bash dotfiles.sh [COMMAND]
@@ -61,7 +61,7 @@ ${BLUE}Dotfiles tracked:${NC}
 EOF
 }
 
-# Lister les dotfiles à synchroniser
+# List dotfiles to sync
 get_dotfiles() {
     cat << 'EOF'
 .bashrc
@@ -79,7 +79,7 @@ get_dotfiles() {
 EOF
 }
 
-# Initialiser la synchronisation
+# Initialize synchronization
 init_sync() {
     if [ ! -d "${SYNC_DIR}" ]; then
         echo -e "${RED}✗ Erreur: SYNC_DIR n'existe pas: ${SYNC_DIR}${NC}"
@@ -87,14 +87,14 @@ init_sync() {
         return 1
     fi
     
-    echo -e "${BLUE}Initialisation de la synchronisation des dotfiles...${NC}"
+    echo -e "${BLUE}Initializing dotfiles synchronization...${NC}"
     echo -e "Destination: ${GREEN}${SYNC_DIR}${NC}\n"
     
     # Créer le dossier dotfiles s'il n'existe pas
     local DOTFILES_DIR="${SYNC_DIR}/dotfiles"
     mkdir -p "${DOTFILES_DIR}"
     
-    echo -e "${BLUE}Copie des dotfiles existants...${NC}"
+    echo -e "${BLUE}Copying existing dotfiles...${NC}"
     
     local count=0
     while IFS= read -r dotfile; do
@@ -110,26 +110,26 @@ init_sync() {
         fi
     done < <(get_dotfiles)
     
-    echo -e "\n${GREEN}✓ Initialisation terminée (${count} fichiers)${NC}"
-    echo -e "Prochaine étape: ${BLUE}bash dotfiles.sh setup${NC}"
+    echo -e "\n${GREEN}✓ Initialization complete (${count} files)${NC}"
+    echo -e "Next step: ${BLUE}bash dotfiles.sh setup${NC}"
 }
 
-# Créer les symlinks
+# Create symlinks
 setup_symlinks() {
     if [ ! -d "${SYNC_DIR}" ]; then
-        echo -e "${RED}✗ Erreur: SYNC_DIR n'existe pas${NC}"
+        echo -e "${RED}✗ Error: SYNC_DIR does not exist${NC}"
         return 1
     fi
     
     local DOTFILES_DIR="${SYNC_DIR}/dotfiles"
     
     if [ ! -d "${DOTFILES_DIR}" ]; then
-        echo -e "${RED}✗ Erreur: ${DOTFILES_DIR} n'existe pas${NC}"
-        echo -e "${YELLOW}Exécutez d'abord: ${BLUE}bash dotfiles.sh init${NC}"
+        echo -e "${RED}✗ Error: ${DOTFILES_DIR} does not exist${NC}"
+        echo -e "${YELLOW}Run first: ${BLUE}bash dotfiles.sh init${NC}"
         return 1
     fi
     
-    echo -e "${BLUE}Configuration des symlinks...${NC}\n"
+    echo -e "${BLUE}Setting up symlinks...${NC}\n"
     
     local count=0
     while IFS= read -r dotfile; do
@@ -148,7 +148,7 @@ setup_symlinks() {
         
         # Supprimer l'original s'il existe et n'est pas un symlink
         if [ -e "${home_path}" ] && [ ! -L "${home_path}" ]; then
-            echo -e "  ${YELLOW}⚠${NC} Sauvegarde: ${dotfile} → ${dotfile}.backup"
+            echo -e "  ${YELLOW}⚠${NC} Backup: ${dotfile} → ${dotfile}.backup"
             mv "${home_path}" "${home_path}.backup"
         fi
         
@@ -158,14 +158,14 @@ setup_symlinks() {
             echo -e "  ${GREEN}✓${NC} Symlink: ${dotfile} → ${filename}"
             ((count++))
         else
-            echo -e "  ${BLUE}→${NC} Déjà lié: ${dotfile}"
+            echo -e "  ${BLUE}→${NC} Already linked: ${dotfile}"
         fi
     done < <(get_dotfiles)
     
-    echo -e "\n${GREEN}✓ Configuration terminée (${count} symlinks créés)${NC}"
+    echo -e "\n${GREEN}✓ Setup complete (${count} symlinks created)${NC}"
 }
 
-# Synchroniser depuis la maison vers le dossier sync
+# Sync from home to sync folder
 sync_to_remote() {
     if [ ! -d "${SYNC_DIR}" ]; then
         echo -e "${RED}✗ Erreur: SYNC_DIR n'existe pas${NC}"
@@ -175,7 +175,7 @@ sync_to_remote() {
     local DOTFILES_DIR="${SYNC_DIR}/dotfiles"
     mkdir -p "${DOTFILES_DIR}"
     
-    echo -e "${BLUE}Synchronisation vers le dossier synchronisé...${NC}\n"
+    echo -e "${BLUE}Syncing to sync folder...${NC}\n"
     
     local count=0
     while IFS= read -r dotfile; do
@@ -188,19 +188,19 @@ sync_to_remote() {
         if [ -e "${home_path}" ]; then
             if [ -L "${home_path}" ]; then
                 # C'est un symlink, pas besoin de copier
-                echo -e "  ${BLUE}→${NC} Lié: ${dotfile}"
+                echo -e "  ${BLUE}→${NC} Linked: ${dotfile}"
             else
                 cp -r "${home_path}" "${sync_path}"
-                echo -e "  ${GREEN}✓${NC} Copié: ${dotfile}"
+                echo -e "  ${GREEN}✓${NC} Copied: ${dotfile}"
                 ((count++))
             fi
         fi
     done < <(get_dotfiles)
     
-    echo -e "\n${GREEN}✓ Synchronisation terminée (${count} fichiers)${NC}"
+    echo -e "\n${GREEN}✓ Sync complete (${count} files)${NC}"
 }
 
-# Restaurer depuis le dossier sync vers la maison
+# Restore from sync folder to home
 restore_from_remote() {
     if [ ! -d "${SYNC_DIR}" ]; then
         echo -e "${RED}✗ Erreur: SYNC_DIR n'existe pas${NC}"
@@ -214,7 +214,7 @@ restore_from_remote() {
         return 1
     fi
     
-    echo -e "${BLUE}Restauration depuis le dossier synchronisé...${NC}\n"
+    echo -e "${BLUE}Restoring from sync folder...${NC}\n"
     
     local count=0
     while IFS= read -r dotfile; do
@@ -230,29 +230,29 @@ restore_from_remote() {
             if [ ! -L "${home_path}" ]; then
                 if [ -e "${home_path}" ]; then
                     mv "${home_path}" "${home_path}.backup"
-                    echo -e "  ${YELLOW}⚠${NC} Sauvegarde: ${dotfile}"
+                    echo -e "  ${YELLOW}⚠${NC} Backup: ${dotfile}"
                 fi
                 cp -r "${sync_path}" "${home_path}"
-                echo -e "  ${GREEN}✓${NC} Restauré: ${dotfile}"
+                echo -e "  ${GREEN}✓${NC} Restored: ${dotfile}"
                 ((count++))
             fi
         fi
     done < <(get_dotfiles)
     
-    echo -e "\n${GREEN}✓ Restauration terminée (${count} fichiers)${NC}"
+    echo -e "\n${GREEN}✓ Restore complete (${count} files)${NC}"
 }
 
-# Afficher le statut
+# Show status
 show_status() {
-    echo -e "${BLUE}Statut de la synchronisation des dotfiles:${NC}\n"
+    echo -e "${BLUE}Dotfiles sync status:${NC}\n"
     
     if [ -z "${SYNC_DIR}" ]; then
-        echo -e "  ${RED}✗ SYNC_DIR non configuré${NC}"
+        echo -e "  ${RED}✗ SYNC_DIR not configured${NC}"
         return 1
     fi
     
     if [ ! -d "${SYNC_DIR}" ]; then
-        echo -e "  ${RED}✗ SYNC_DIR inexistant: ${SYNC_DIR}${NC}"
+        echo -e "  ${RED}✗ SYNC_DIR does not exist: ${SYNC_DIR}${NC}"
         return 1
     fi
     
@@ -260,7 +260,7 @@ show_status() {
     
     local DOTFILES_DIR="${SYNC_DIR}/dotfiles"
     if [ -d "${DOTFILES_DIR}" ]; then
-        echo -e "  ${GREEN}✓ Dossier dotfiles trouvé${NC}"
+        echo -e "  ${GREEN}✓ Dotfiles folder found${NC}"
         
         local linked=0
         local files=0
@@ -274,15 +274,15 @@ show_status() {
             ((files++))
         done < <(get_dotfiles)
         
-        echo -e "  ${GREEN}✓ ${linked}/${files} dotfiles liés${NC}"
+        echo -e "  ${GREEN}✓ ${linked}/${files} dotfiles linked${NC}"
     else
-        echo -e "  ${YELLOW}⚠ Dossier dotfiles non trouvé${NC}"
+        echo -e "  ${YELLOW}⚠ Dotfiles folder not found${NC}"
     fi
 }
 
-# Lister les dotfiles
+# List dotfiles
 list_dotfiles() {
-    echo -e "${BLUE}Dotfiles suivis:${NC}\n"
+    echo -e "${BLUE}Tracked dotfiles:${NC}\n"
     
     get_dotfiles | while read -r dotfile; do
         [ -z "$dotfile" ] && continue
@@ -293,37 +293,37 @@ list_dotfiles() {
         if [ -L "${home_path}" ]; then
             echo -e "  ${GREEN}✓${NC} ${dotfile} → $(readlink "${home_path}")"
         elif [ -e "${home_path}" ]; then
-            echo -e "  ${YELLOW}✗${NC} ${dotfile} (non lié)"
+            echo -e "  ${YELLOW}✗${NC} ${dotfile} (not linked)"
         else
-            echo -e "  ${BLUE}○${NC} ${dotfile} (absent)"
+            echo -e "  ${BLUE}○${NC} ${dotfile} (missing)"
         fi
     done
 }
 
-# Afficher la configuration
+# Show configuration
 show_config() {
     echo -e "${BLUE}Configuration:${NC}\n"
-    echo -e "  Fichier config: ${ENV_FILE}"
+    echo -e "  Config file: ${ENV_FILE}"
     
     if [ -f "${ENV_FILE}" ]; then
-        echo -e "  ${GREEN}✓ Configuration trouvée${NC}\n"
-        echo -e "${BLUE}Contenu:${NC}"
+        echo -e "  ${GREEN}✓ Configuration found${NC}\n"
+        echo -e "${BLUE}Content:${NC}"
         grep -v "^#" "${ENV_FILE}" | grep -v "^$" | sed 's/^/    /'
     else
-        echo -e "  ${RED}✗ Configuration non trouvée${NC}"
+        echo -e "  ${RED}✗ Configuration not found${NC}"
     fi
 }
 
-# Exécuter la commande
+# Execute the command
 if [ -z "$1" ] || [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ "$1" = "help" ]; then
     show_help
     exit 0
 fi
 
-# Charger la configuration
+# Load configuration
 if ! load_config; then
     if [ "$1" != "config" ] && [ "$1" != "init" ]; then
-        echo -e "${RED}✗ Configuration requise${NC}"
+        echo -e "${RED}✗ Configuration required${NC}"
         exit 1
     fi
 fi
@@ -334,7 +334,7 @@ if [ -z "$1" ] || [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ "$1" = "help" ]; t
     exit 0
 fi
 
-# Charger la configuration
+# Load configuration
 if ! load_config; then
     if [ "$1" != "config" ] && [ "$1" != "init" ]; then
         echo -e "${RED}✗ Configuration requise${NC}"
@@ -342,67 +342,67 @@ if ! load_config; then
     fi
 fi
 
-# Fonction pour gérer Obsidian
+# Function to manage Obsidian
 manage_obsidian() {
     local cmd=$1
     
     if [ -z "${OBSIDIAN_VAULT}" ]; then
-        echo -e "${YELLOW}⚠ OBSIDIAN_VAULT non configuré${NC}"
+        echo -e "${YELLOW}⚠ OBSIDIAN_VAULT not configured${NC}"
         return 1
     fi
     
     if [ ! -d "${OBSIDIAN_VAULT}" ]; then
-        echo -e "${YELLOW}⚠ Dossier Obsidian n'existe pas: ${OBSIDIAN_VAULT}${NC}"
+        echo -e "${YELLOW}⚠ Obsidian folder does not exist: ${OBSIDIAN_VAULT}${NC}"
         return 1
     fi
     
-    # Chemin vers la vault Obsidian locale
+    # Path to local Obsidian vault
     local OBSIDIAN_LOCAL="${HOME}/Obsidian"
     
     case "${cmd}" in
         sync)
-            echo -e "${BLUE}Synchronisation d'Obsidian vers ${OBSIDIAN_VAULT}...${NC}"
+            echo -e "${BLUE}Syncing Obsidian to ${OBSIDIAN_VAULT}...${NC}"
             if [ -d "${OBSIDIAN_LOCAL}" ]; then
                 rsync -av "${OBSIDIAN_LOCAL}/" "${OBSIDIAN_VAULT}/"
-                echo -e "${GREEN}✓ Synchronisation Obsidian terminée${NC}"
+                echo -e "${GREEN}✓ Obsidian sync complete${NC}"
             else
-                echo -e "${YELLOW}⚠ Vault locale non trouvée${NC}"
+                echo -e "${YELLOW}⚠ Local vault not found${NC}"
             fi
             ;;
         restore)
-            echo -e "${BLUE}Restauration d'Obsidian depuis ${OBSIDIAN_VAULT}...${NC}"
+            echo -e "${BLUE}Restoring Obsidian from ${OBSIDIAN_VAULT}...${NC}"
             mkdir -p "${OBSIDIAN_LOCAL}"
             rsync -av "${OBSIDIAN_VAULT}/" "${OBSIDIAN_LOCAL}/"
-            echo -e "${GREEN}✓ Restauration Obsidian terminée${NC}"
+            echo -e "${GREEN}✓ Obsidian restore complete${NC}"
             ;;
         status)
-            echo -e "${BLUE}Statut Obsidian:${NC}"
-            echo -e "  Vault distante: ${GREEN}${OBSIDIAN_VAULT}${NC}"
+            echo -e "${BLUE}Obsidian status:${NC}"
+            echo -e "  Remote vault: ${GREEN}${OBSIDIAN_VAULT}${NC}"
             if [ -d "${OBSIDIAN_LOCAL}" ]; then
                 local local_size=$(du -sh "${OBSIDIAN_LOCAL}" 2>/dev/null | cut -f1)
-                echo -e "  Vault locale: ${GREEN}${OBSIDIAN_LOCAL}${NC} (${local_size})"
+                echo -e "  Local vault: ${GREEN}${OBSIDIAN_LOCAL}${NC} (${local_size})"
             else
-                echo -e "  Vault locale: ${YELLOW}non trouvée${NC}"
+                echo -e "  Local vault: ${YELLOW}not found${NC}"
             fi
             ;;
     esac
 }
 
-# Fonction pour gérer VS Code
+# Function to manage VS Code
 manage_vscode() {
     local cmd=$1
     
     if [ -z "${VSCODE_CONFIG}" ]; then
-        echo -e "${YELLOW}⚠ VSCODE_CONFIG non configuré${NC}"
+        echo -e "${YELLOW}⚠ VSCODE_CONFIG not configured${NC}"
         return 1
     fi
     
     if [ ! -d "${VSCODE_CONFIG}" ]; then
-        echo -e "${YELLOW}⚠ Dossier VS Code n'existe pas: ${VSCODE_CONFIG}${NC}"
+        echo -e "${YELLOW}⚠ VS Code folder does not exist: ${VSCODE_CONFIG}${NC}"
         return 1
     fi
     
-    # Déterminer le chemin VS Code selon le système
+    # Determine VS Code path depending on the system
     local VSCODE_LOCAL
     if [ "$(uname -s)" = "Darwin" ]; then
         VSCODE_LOCAL="${HOME}/Library/Application Support/Code"
@@ -412,46 +412,46 @@ manage_vscode() {
     
     case "${cmd}" in
         sync)
-            echo -e "${BLUE}Synchronisation de VS Code vers ${VSCODE_CONFIG}...${NC}"
+            echo -e "${BLUE}Syncing VS Code to ${VSCODE_CONFIG}...${NC}"
             if [ -d "${VSCODE_LOCAL}" ]; then
                 rsync -av --exclude=workspaceStorage --exclude=CachedData "${VSCODE_LOCAL}/User/" "${VSCODE_CONFIG}/"
-                echo -e "${GREEN}✓ Synchronisation VS Code terminée${NC}"
+                echo -e "${GREEN}✓ VS Code sync complete${NC}"
             else
-                echo -e "${YELLOW}⚠ Configuration VS Code locale non trouvée${NC}"
+                echo -e "${YELLOW}⚠ Local VS Code configuration not found${NC}"
             fi
             ;;
         restore)
-            echo -e "${BLUE}Restauration de VS Code depuis ${VSCODE_CONFIG}...${NC}"
+            echo -e "${BLUE}Restoring VS Code from ${VSCODE_CONFIG}...${NC}"
             mkdir -p "${VSCODE_LOCAL}/User"
             rsync -av "${VSCODE_CONFIG}/" "${VSCODE_LOCAL}/User/"
-            echo -e "${GREEN}✓ Restauration VS Code terminée${NC}"
+            echo -e "${GREEN}✓ VS Code restore complete${NC}"
             ;;
         status)
-            echo -e "${BLUE}Statut VS Code:${NC}"
-            echo -e "  Config distante: ${GREEN}${VSCODE_CONFIG}${NC}"
+            echo -e "${BLUE}VS Code status:${NC}"
+            echo -e "  Remote config: ${GREEN}${VSCODE_CONFIG}${NC}"
             if [ -d "${VSCODE_LOCAL}" ]; then
                 local local_size=$(du -sh "${VSCODE_LOCAL}" 2>/dev/null | cut -f1)
-                echo -e "  Config locale: ${GREEN}${VSCODE_LOCAL}${NC} (${local_size})"
+                echo -e "  Local config: ${GREEN}${VSCODE_LOCAL}${NC} (${local_size})"
             else
-                echo -e "  Config locale: ${YELLOW}non trouvée${NC}"
+                echo -e "  Local config: ${YELLOW}not found${NC}"
             fi
             ;;
     esac
 }
 
-# Gérer packages.conf
+# Manage packages.conf
 manage_packages() {
     local cmd="${1:-status}"
     
     if [ -z "${PACKAGES_CONF_DIR}" ]; then
-        echo -e "${YELLOW}⚠ PACKAGES_CONF_DIR n'est pas défini dans ${ENV_FILE}${NC}"
-        echo -e "${BLUE}Exemple: PACKAGES_CONF_DIR=\"\$HOME/OneDrive/ok_computer\"${NC}"
+        echo -e "${YELLOW}⚠ PACKAGES_CONF_DIR is not defined in ${ENV_FILE}${NC}"
+        echo -e "${BLUE}Example: PACKAGES_CONF_DIR=\"\$HOME/OneDrive/ok_computer\"${NC}"
         return 1
     fi
     
     if [ ! -d "${PACKAGES_CONF_DIR}" ]; then
-        echo -e "${YELLOW}⚠ Dossier n'existe pas: ${PACKAGES_CONF_DIR}${NC}"
-        echo -e "${BLUE}Création du dossier...${NC}"
+        echo -e "${YELLOW}⚠ Directory does not exist: ${PACKAGES_CONF_DIR}${NC}"
+        echo -e "${BLUE}Creating directory...${NC}"
         mkdir -p "${PACKAGES_CONF_DIR}"
     fi
     
@@ -461,46 +461,46 @@ manage_packages() {
     
     case "${cmd}" in
         sync)
-            echo -e "${BLUE}Synchronisation de packages.conf vers ${PACKAGES_CONF_DIR}...${NC}"
+            echo -e "${BLUE}Syncing packages.conf to ${PACKAGES_CONF_DIR}...${NC}"
             if [ -f "${SOURCE_CONF}" ]; then
                 cp "${SOURCE_CONF}" "${REMOTE_CONF}"
-                echo -e "${GREEN}✓ packages.conf synchronisé${NC}"
+                echo -e "${GREEN}✓ packages.conf synced${NC}"
             elif [ -f "${EXAMPLE_CONF}" ]; then
                 cp "${EXAMPLE_CONF}" "${REMOTE_CONF}"
-                echo -e "${GREEN}✓ packages.conf.example copié comme base${NC}"
+                echo -e "${GREEN}✓ packages.conf.example copied as base${NC}"
             else
-                echo -e "${RED}✗ Aucun fichier packages.conf trouvé${NC}"
+                echo -e "${RED}✗ No packages.conf file found${NC}"
                 return 1
             fi
             ;;
         restore)
-            echo -e "${BLUE}Restauration de packages.conf depuis ${PACKAGES_CONF_DIR}...${NC}"
+            echo -e "${BLUE}Restoring packages.conf from ${PACKAGES_CONF_DIR}...${NC}"
             if [ -f "${REMOTE_CONF}" ]; then
                 cp "${REMOTE_CONF}" "${SOURCE_CONF}"
-                echo -e "${GREEN}✓ packages.conf restauré${NC}"
+                echo -e "${GREEN}✓ packages.conf restored${NC}"
             else
-                echo -e "${YELLOW}⚠ Aucun packages.conf distant trouvé${NC}"
+                echo -e "${YELLOW}⚠ No remote packages.conf found${NC}"
                 if [ -f "${EXAMPLE_CONF}" ]; then
-                    echo -e "${BLUE}Copie de l'exemple...${NC}"
+                    echo -e "${BLUE}Copying example...${NC}"
                     cp "${EXAMPLE_CONF}" "${SOURCE_CONF}"
-                    echo -e "${GREEN}✓ packages.conf créé depuis l'exemple${NC}"
+                    echo -e "${GREEN}✓ packages.conf created from example${NC}"
                 fi
             fi
             ;;
         status)
-            echo -e "${BLUE}Statut packages.conf:${NC}"
-            echo -e "  Dossier synchronisé: ${GREEN}${PACKAGES_CONF_DIR}${NC}"
+            echo -e "${BLUE}packages.conf status:${NC}"
+            echo -e "  Synced folder: ${GREEN}${PACKAGES_CONF_DIR}${NC}"
             if [ -f "${REMOTE_CONF}" ]; then
                 local line_count=$(wc -l < "${REMOTE_CONF}" 2>/dev/null | tr -d ' ')
-                echo -e "  Fichier distant: ${GREEN}${REMOTE_CONF}${NC} (${line_count} lignes)"
+                echo -e "  Remote file: ${GREEN}${REMOTE_CONF}${NC} (${line_count} lines)"
             else
-                echo -e "  Fichier distant: ${YELLOW}non trouvé${NC}"
+                echo -e "  Remote file: ${YELLOW}not found${NC}"
             fi
             if [ -f "${SOURCE_CONF}" ]; then
                 local line_count=$(wc -l < "${SOURCE_CONF}" 2>/dev/null | tr -d ' ')
-                echo -e "  Fichier local: ${GREEN}${SOURCE_CONF}${NC} (${line_count} lignes)"
+                echo -e "  Local file: ${GREEN}${SOURCE_CONF}${NC} (${line_count} lines)"
             else
-                echo -e "  Fichier local: ${YELLOW}utilise packages.conf.example${NC}"
+                echo -e "  Local file: ${YELLOW}using packages.conf.example${NC}"
             fi
             ;;
     esac
@@ -546,7 +546,7 @@ case "$1" in
         manage_packages "${2:-status}"
         ;;
     *)
-        echo -e "${RED}✗ Commande inconnue: $1${NC}"
+        echo -e "${RED}✗ Unknown command: $1${NC}"
         show_help
         exit 1
         ;;

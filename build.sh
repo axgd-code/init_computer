@@ -48,7 +48,7 @@ for script in "${SRC_DIR}"/*.sh; do
   echo "Compilé: ${script} → ${DIST_DIR}/$(basename "${script}")"
 done
 
-# Inclure le fichier de configuration pour distribution
+# Include configuration file for distribution
 if [ -f "${SRC_DIR}/packages.conf" ]; then
   cp "${SRC_DIR}/packages.conf" "${DIST_DIR}/packages.conf"
 fi

@@ -1,44 +1,44 @@
 #!/bin/bash
 
-echo "Configuration de OSX…"
+echo "Configuring macOS..."
 
-#Installation des confs macOS que j'aime (https://macos-defaults.com/fr/)
-#Dock
-##Dock à gauche de l'écran
+# macOS configuration preferences (inspired by https://macos-defaults.com/)
+# Dock
+## Dock on the left side
 defaults write com.apple.dock "orientation" -string "left" 
-##Taille des icônes
+## Icon size
 defaults write com.apple.dock "tilesize" -int "22" 
-##Cacher le doc automatiquement
+## Auto-hide the Dock
 defaults write com.apple.dock "autohide" -bool "true"
-##Ne pas afficher la section des applications utilisées récemment
+## Do not show recent apps section
 defaults write com.apple.dock "show-recents" -bool "false"
 
-#Finder
-##Show filename extensions by default
+# Finder
+## Show filename extensions by default
 defaults write NSGlobalDomain "AppleShowAllExtensions" -bool "false"
-##Ne pas mettre d'alerte au changement d'extension d'un fichier 
+## Do not warn on extension change
 defaults write com.apple.finder "FXEnableExtensionChangeWarning" -bool "false"
-#Enregistrer par défaut dans iCloud
+# Save to disk by default instead of iCloud
 defaults write NSGlobalDomain "NSDocumentSaveNewDocumentsToCloud" -bool "false" 
 
-##Menus
-##Format de l'horloge
+## Menus
+## Clock format
 defaults write com.apple.menuextra.clock "DateFormat" -string "\"EEE d MMM HH:MM\"" 
 
-##Assistante d'évaluation
+## Feedback Assistant
 defaults write com.apple.appleseed.FeedbackAssistant "Autogather" -bool "false" 
 
-#TextEdit
-##Ouvrir par défaut en txt
+# TextEdit
+## Open as plain text by default
 defaults write com.apple.TextEdit "RichText" -bool "false"
 
-##Timemachine
-##Ne pas activer l'ajout de disque timeMachine
+## Time Machine
+## Do not offer new disks for Time Machine backups
 defaults write com.apple.TimeMachine "DoNotOfferNewDisksForBackup" -bool "true" 
 
-###Trackpad
-##Activer le tap to click
+### Trackpad
+## Enable tap to click
 defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
 defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
-##Désactiver le "natural" scroll
+## Disable "natural" scroll
 defaults write NSGlobalDomain com.apple.swipescrolldirection -bool true

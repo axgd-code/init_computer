@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Small wrapper to quickly run repository scripts without prefixing with "bash src/..."
+# Usage:
+#   okc init                -> bash src/init.sh
+#   okc app install <pkg>  -> bash src/app.sh install <pkg>
+#   okc dotfiles sync      -> bash src/dotfiles.sh sync
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [ "$#" -lt 1 ]; then
+  cat <<EOF
+Usage: okc <script> [args...]
+
+Exemples:
+  okc init
+  okc app install firefox
+  okc dotfiles status
+  okc packages sync
+
+Installez-le dans votre PATH et rendez-le exécutable:
+  chmod +x okc
+  ln -s "${SCRIPT_DIR}/okc" /usr/local/bin/okc
+EOF
+  exit 1
+fi
+
+cmd="$1"
+shift || true
+
+case "$cmd" in
+  app|dotfiles|init|update|install_fonts|wifi_from_kdbx|setup_auto_update)
+    target="$SCRIPT_DIR/src/${cmd}.sh"
+    ;;
+  packages)
+    # packages subcommand is handled by src/dotfiles.sh packages ...
+    target="$SCRIPT_DIR/src/dotfiles.sh"
+    ;;
+  *)
+    # fallback: try src/<cmd>.sh
+    target="$SCRIPT_DIR/src/${cmd}.sh"
+    ;;
+esac
+
+if [ ! -f "$target" ]; then
+  echo "Script introuvable: $target" >&2
+  exit 2
+fi
+
+exec bash "$target" "$@"

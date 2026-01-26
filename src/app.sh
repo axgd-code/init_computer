@@ -2,23 +2,23 @@
 
 set -e
 
-# Couleurs pour l'affichage
+# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Obtenir le répertoire du script
+# Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Charger .env.local si disponible
+# Load .env.local if available
 if [ -f "${SCRIPT_DIR}/../.env.local" ]; then
     # shellcheck disable=SC1091
     source "${SCRIPT_DIR}/../.env.local"
 fi
 
-# Déterminer le chemin du fichier packages.conf
+# Determine path to packages.conf file
 if [ -n "${PACKAGES_CONF_DIR:-}" ] && [ -f "${PACKAGES_CONF_DIR}/packages.conf" ]; then
     PACKAGES_CONF="${PACKAGES_CONF_DIR}/packages.conf"
 elif [ -f "${SCRIPT_DIR}/packages.conf" ]; then
@@ -27,7 +27,7 @@ else
     PACKAGES_CONF="${SCRIPT_DIR}/packages.conf.example"
 fi
 
-# Détection du système d'exploitation
+# Detect operating system
 OS="$(uname -s)"
 case "${OS}" in
     Darwin*)    MACHINE=Mac;;
@@ -35,7 +35,7 @@ case "${OS}" in
     *)          MACHINE=Linux;;
 esac
 
-# Affichage de l'aide
+# Help display
 show_help() {
     cat << EOF
 ${BLUE}Usage:${NC} bash app.sh [COMMAND] [OPTIONS]
@@ -63,7 +63,7 @@ ${BLUE}Current system:${NC} ${MACHINE}
 EOF
 }
 
-# Vérifier les arguments
+# Check arguments
 if [ $# -lt 1 ]; then
     show_help
     exit 1
@@ -73,14 +73,14 @@ COMMAND=$1
 APP=$2
 TYPE=${3:-auto}
 
-# Fonction pour installer une application
+# Function to install an application
 install_app() {
     local app=$1
     local type=$2
     
     echo -e "${BLUE}Installation de ${GREEN}${app}${NC}...\n"
     
-    # Vérifier la disponibilité avant d'installer
+    # Check availability before installing
     echo -e "${BLUE}Vérification de la disponibilité...${NC}"
     if ! check_homebrew_api "${app}" "${type}" && ! check_chocolatey_api "${app}"; then
         echo -e "${YELLOW}⚠ Attention: ${app} n'a pas été trouvé dans les dépôts publics${NC}"
@@ -134,7 +134,7 @@ install_app() {
     fi
 }
 
-# Fonction pour vérifier si une app est un cask
+# Function to check if an app is a cask
 is_cask_app() {
     local app=$1
     # Vérifier via l'API Homebrew
@@ -142,7 +142,7 @@ is_cask_app() {
     return 1
 }
 
-# Fonction pour désinstaller une application
+# Function to uninstall an application
 uninstall_app() {
     local app=$1
     
@@ -182,7 +182,7 @@ uninstall_app() {
     fi
 }
 
-# Fonction pour vérifier la disponibilité d'une application
+# Function to check an application's availability
 check_availability() {
     local app=$1
     local type=$2
@@ -238,7 +238,7 @@ check_availability() {
     fi
 }
 
-# Fonction pour vérifier sur Homebrew via API
+# Function to check Homebrew via API
 check_homebrew_api() {
     local app=$1
     local type=$2
@@ -258,7 +258,7 @@ check_homebrew_api() {
     return 1
 }
 
-# Fonction pour vérifier sur Chocolatey via API
+# Function to check Chocolatey via API
 check_chocolatey_api() {
     local app=$1
     
@@ -270,7 +270,7 @@ check_chocolatey_api() {
     return 1
 }
 
-# Fonction pour vérifier sur Linux
+# Function to check availability on Linux
 check_linux_availability() {
     local app=$1
     
@@ -295,12 +295,12 @@ check_linux_availability() {
 }
 
 
-# Fonction pour ajouter une application à packages.conf
+# Function to add an application to packages.conf
 add_to_conf() {
     local app=$1
     local type=$2
     
-    # Vérifier si l'app existe déjà
+    # Check if the app already exists
     if grep -q "^[^#]*|${app}|" "${PACKAGES_CONF}"; then
         echo -e "${YELLOW}⚠ ${app} existe déjà dans packages.conf${NC}"
         return 1
@@ -328,7 +328,7 @@ add_to_conf() {
         echo -e "  ${RED}✗${NC} Non disponible sur Windows"
     fi
     
-    # Déterminer le type si auto
+    # Determine type if set to auto
     if [ "${type}" = "auto" ]; then
         if [ "${mac_available}" = true ]; then
             type="cask"  # Par défaut, utilise cask pour macOS si disponible
@@ -341,7 +341,7 @@ add_to_conf() {
         fi
     fi
     
-    # Définir les noms selon la disponibilité
+    # Set names according to availability
     local mac_name="-"
     local win_name="-"
     
@@ -353,7 +353,7 @@ add_to_conf() {
         win_name="${app}"
     fi
     
-    # Si aucune plateforme ne l'a, afficher un avertissement
+    # If no platform has it, display a warning
     if [ "${mac_name}" = "-" ] && [ "${win_name}" = "-" ]; then
         echo -e "${RED}⚠ ${app} n'a été trouvé sur aucune plateforme${NC}"
         echo -e "${YELLOW}Voulez-vous quand même l'ajouter? (y/n)${NC}"
@@ -364,7 +364,7 @@ add_to_conf() {
         fi
     fi
     
-    # Ajouter à packages.conf
+    # Add to packages.conf
     local entry="${type}|${mac_name}|${win_name}|${app}"
     echo "${entry}" >> "${PACKAGES_CONF}"
     
@@ -372,7 +372,7 @@ add_to_conf() {
     echo -e "  Entrée: ${entry}"
 }
 
-# Fonction pour supprimer une application de packages.conf
+# Function to remove an application from packages.conf
 remove_from_conf() {
     local app=$1
     
@@ -389,7 +389,7 @@ remove_from_conf() {
     echo -e "${GREEN}✓ ${app} supprimé de packages.conf${NC}"
 }
 
-# Fonction pour lister les applications
+# Function to list applications
 list_apps() {
     echo -e "${BLUE}Applications dans packages.conf:${NC}\n"
     
@@ -419,7 +419,7 @@ list_apps() {
     ' "${PACKAGES_CONF}"
 }
 
-# Exécuter la commande
+# Execute the command
 case "${COMMAND}" in
     install)
         if [ -z "${APP}" ]; then

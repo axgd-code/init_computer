@@ -1,21 +1,27 @@
 #!/bin/bash
 
-echo "Configuration de la mise à jour automatique quotidienne à 21h00"
+echo "Configuring daily automatic updates"
 
-# Obtenir le chemin absolu du répertoire du script
+# Get the absolute path of the script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 UPDATE_SCRIPT="${SCRIPT_DIR}/update.sh"
 
-# Vérifier que le script de mise à jour existe
+# Load .env.local if available (one level up)
+if [ -f "${SCRIPT_DIR}/../.env.local" ]; then
+    # shellcheck disable=SC1091
+    source "${SCRIPT_DIR}/../.env.local"
+fi
+
+# Check that the update script exists
 if [ ! -f "${UPDATE_SCRIPT}" ]; then
-    echo "✗ Erreur: Le script ${UPDATE_SCRIPT} n'existe pas"
+    echo "✗ Error: Script ${UPDATE_SCRIPT} does not exist"
     exit 1
 fi
 
-# Rendre le script de mise à jour exécutable
+# Make the update script executable
 chmod +x "${UPDATE_SCRIPT}"
 
-# Détection du système d'exploitation
+# Detect operating system
 OS="$(uname -s)"
 case "${OS}" in
     Linux*)     MACHINE=Linux;;
@@ -26,17 +32,24 @@ case "${OS}" in
     *)          MACHINE="UNKNOWN:${OS}"
 esac
 
-echo "Système détecté: ${MACHINE}"
+echo "Detected system: ${MACHINE}"
+
+# Schedule time defaults (can be overridden in .env.local)
+AUTO_UPDATE_HOUR=${AUTO_UPDATE_HOUR:-21}
+AUTO_UPDATE_MINUTE=${AUTO_UPDATE_MINUTE:-0}
+
+# Formatted time strings
+SCHEDULE_HHMM=$(printf "%02d:%02d" "${AUTO_UPDATE_HOUR}" "${AUTO_UPDATE_MINUTE}")
 
 if [ "${MACHINE}" = "Mac" ]; then
-    echo "Configuration de launchd pour macOS..."
+    echo "Configuring launchd for macOS..."
     
     PLIST_FILE="$HOME/Library/LaunchAgents/com.user.packages.update.plist"
     
-    # Créer le répertoire si nécessaire
+    # Create directory if needed
     mkdir -p "$HOME/Library/LaunchAgents"
     
-    # Créer le fichier plist
+    # Create the plist file
     cat > "${PLIST_FILE}" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -52,9 +65,9 @@ if [ "${MACHINE}" = "Mac" ]; then
     <key>StartCalendarInterval</key>
     <dict>
         <key>Hour</key>
-        <integer>21</integer>
+        <integer>${AUTO_UPDATE_HOUR}</integer>
         <key>Minute</key>
-        <integer>0</integer>
+        <integer>${AUTO_UPDATE_MINUTE}</integer>
     </dict>
     <key>StandardOutPath</key>
     <string>${SCRIPT_DIR}/update.log</string>
@@ -64,59 +77,59 @@ if [ "${MACHINE}" = "Mac" ]; then
 </plist>
 EOF
 
-    # Charger le service
+    # Load the service
     launchctl unload "${PLIST_FILE}" 2>/dev/null || true
     launchctl load "${PLIST_FILE}"
     
-    echo "✓ Tâche planifiée créée: ${PLIST_FILE}"
-    echo "✓ Les mises à jour s'exécuteront tous les jours à 21h00"
+    echo "✓ Scheduled task created: ${PLIST_FILE}"
+    echo "✓ Updates will run daily at ${SCHEDULE_HHMM}"
     echo "  Logs: ${SCRIPT_DIR}/update.log"
     echo ""
-    echo "Pour désactiver: launchctl unload ${PLIST_FILE}"
-    echo "Pour réactiver: launchctl load ${PLIST_FILE}"
+    echo "To disable: launchctl unload ${PLIST_FILE}"
+    echo "To enable: launchctl load ${PLIST_FILE}"
 
 elif [ "${MACHINE}" = "Windows" ]; then
-    echo "Configuration du Task Scheduler pour Windows..."
+    echo "Configuring Task Scheduler for Windows..."
     
-    # Créer une tâche planifiée avec schtasks
+    # Create a scheduled task with schtasks
     TASK_NAME="PackagesAutoUpdate"
     
-    # Supprimer la tâche si elle existe déjà
+    # Remove the task if it already exists
     schtasks.exe //Delete //TN "${TASK_NAME}" //F 2>/dev/null || true
     
-    # Créer la nouvelle tâche
+    # Create the new task
     schtasks.exe //Create //TN "${TASK_NAME}" \
         //TR "\"C:\\Program Files\\Git\\bin\\bash.exe\" \"${UPDATE_SCRIPT}\"" \
-        //SC DAILY //ST 21:00 //F
+        //SC DAILY //ST ${SCHEDULE_HHMM} //F
     
-    echo "✓ Tâche planifiée créée: ${TASK_NAME}"
-    echo "✓ Les mises à jour s'exécuteront tous les jours à 21h00"
+    echo "✓ Scheduled task created: ${TASK_NAME}"
+    echo "✓ Updates will run daily at ${SCHEDULE_HHMM}"
     echo ""
-    echo "Pour désactiver: schtasks //Change //TN \"${TASK_NAME}\" //DISABLE"
-    echo "Pour réactiver: schtasks //Change //TN \"${TASK_NAME}\" //ENABLE"
-    echo "Pour supprimer: schtasks //Delete //TN \"${TASK_NAME}\" //F"
+    echo "To disable: schtasks //Change //TN \"${TASK_NAME}\" //DISABLE"
+    echo "To enable: schtasks //Change //TN \"${TASK_NAME}\" //ENABLE"
+    echo "To delete: schtasks //Delete //TN \"${TASK_NAME}\" //F"
 
 elif [ "${MACHINE}" = "Linux" ]; then
-    echo "Configuration de cron pour Linux..."
+    echo "Configuring cron for Linux..."
     
-    # Créer une ligne cron
-    CRON_LINE="0 21 * * * ${UPDATE_SCRIPT} >> ${SCRIPT_DIR}/update.log 2>&1"
+    # Create a cron line
+    CRON_LINE="${AUTO_UPDATE_MINUTE} ${AUTO_UPDATE_HOUR} * * * ${UPDATE_SCRIPT} >> ${SCRIPT_DIR}/update.log 2>&1"
     
-    # Vérifier si la ligne existe déjà
+    # Check if the line already exists
     (crontab -l 2>/dev/null | grep -v "${UPDATE_SCRIPT}"; echo "${CRON_LINE}") | crontab -
     
-    echo "✓ Tâche cron créée"
-    echo "✓ Les mises à jour s'exécuteront tous les jours à 21h00"
+    echo "✓ Cron job created"
+    echo "✓ Updates will run daily at ${SCHEDULE_HHMM}"
     echo "  Logs: ${SCRIPT_DIR}/update.log"
     echo ""
-    echo "Pour voir les tâches cron: crontab -l"
-    echo "Pour éditer: crontab -e"
+    echo "To view cron jobs: crontab -l"
+    echo "To edit: crontab -e"
 
 else
-    echo "✗ Système d'exploitation non supporté: ${MACHINE}"
+    echo "✗ Unsupported operating system: ${MACHINE}"
     exit 1
 fi
 
 echo ""
-echo "Configuration terminée avec succès!"
-echo "Vous pouvez tester manuellement avec: bash ${UPDATE_SCRIPT}"
+echo "Configuration completed successfully!"
+echo "You can test manually with: bash ${UPDATE_SCRIPT}"

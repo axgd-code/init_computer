@@ -1,4 +1,4 @@
-# Configuration locale
+# Local configuration
 .env.local
 src/packages.conf
 

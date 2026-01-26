@@ -1,153 +1,155 @@
 # ok_computer
+# ok_computer
 
-Simple repo pour ré-installer plus vite un ordinateur neuf (macOS, Windows, Linux).
+Repository to quickly reconfigure a new computer (macOS, Windows, Linux).
 
-## Installation rapide
+## Quick Install
 
-### Via les releases (recommandé)
+### From releases (recommended)
 
-Télécharger la dernière release :
+Download the latest release and extract:
 ```bash
 curl -fsSL -o init-computer.tar.gz \
   https://github.com/axgd-code/ok_computer/releases/download/$(curl -s https://api.github.com/repos/axgd-code/ok_computer/releases/latest | grep tag_name | cut -d'"' -f4)/init-mac-scripts.tar.gz
 tar -xzf init-computer.tar.gz
-bash init.sh
 ```
 
-Ou télécharger manuellement depuis [releases](https://github.com/axgd-code/ok_computer/releases), puis :
+Run the installer using the `okc` helper included in the archive:
 ```bash
-tar -xzf init-mac-scripts.tar.gz
-bash init.sh
+chmod +x okc
+./okc init
 ```
 
-### Depuis le code source
+If you prefer, install `okc` system-wide first and then run:
+```bash
+chmod +x okc install_okc.sh
+./install_okc.sh    # or sudo ./install_okc.sh
+okc init
+```
 
-Cloner et exécuter depuis les sources :
+### From source
+
 ```bash
 git clone https://github.com/axgd-code/ok_computer.git
 cd ok_computer
-bash src/init.sh
+chmod +x okc install_okc.sh
+./install_okc.sh    # optional: install okc into your PATH
+okc init
 ```
 
 ## Structure
 
-- [src](src) : scripts et configuration principale
-  - [src/init.sh](src/init.sh) : orchestrateur qui détecte l'OS et déclenche l'installation
-  - [src/init_conf_macOs.sh](src/init_conf_macOs.sh) / [src/init_conf_windows.sh](src/init_conf_windows.sh) : réglages spécifiques macOS ou Windows
-  - [src/packages.conf](src/packages.conf) : catalogue des packages installés
-  - [src/app.sh](src/app.sh) : gestionnaire d'applications (ajout/suppression/list)
-  - [src/dotfiles.sh](src/dotfiles.sh) : gestion et synchro des dotfiles
-  - [src/wifi_from_kdbx.sh](src/wifi_from_kdbx.sh) : import Wi-Fi depuis KeePassXC
-  - [src/install_fonts.sh](src/install_fonts.sh), [src/setup_auto_update.sh](src/setup_auto_update.sh), [src/update.sh](src/update.sh)
-- [test](test) : vérifications locales
-  - [test/test.sh](test/test.sh) : `bash -n` + `shellcheck` (si présent)
+- `src/`: main scripts and configuration
+  - `src/init.sh`: orchestrator that detects OS and runs setup
+  - `src/init_conf_macOs.sh` / `src/init_conf_windows.sh`: platform-specific configuration
+  - `src/packages.conf`: list of packages to install
+  - `src/app.sh`: simple app manager (add/remove/list)
+  - `src/dotfiles.sh`: dotfiles sync manager
+  - `src/wifi_from_kdbx.sh`: import Wi‑Fi profiles from KeePassXC
+  - `src/update.sh`: update script for packages
+  - `src/setup_auto_update.sh`: configure automatic daily updates
+- `test/`: local checks
 
-## Fichiers du projet
+## Configuration
 
-### 📋 Configuration
-- [src/packages.conf](src/packages.conf) : fichier de configuration unifié listant tous les packages à installer pour macOS et Windows
-  - Format : `TYPE|NOM_MAC|NOM_WINDOWS|DESCRIPTION`
-  - Les packages s'installent automatiquement lors de l'exécution de [src/init.sh](src/init.sh)
+Copy `.env.example` to `.env.local` and edit to match your paths.
+Typical variables:
+- `SYNC_DIR` — path to your synchronized folder (OneDrive, Synology Drive, Dropbox, ...)
+- `PACKAGES_CONF_DIR` — optional remote folder to store a shared `packages.conf`
+- `OBSIDIAN_VAULT`, `VSCODE_CONFIG` — optional sync targets
 
-### 🔧 Scripts d'installation
-- [src/init.sh](src/init.sh) : script principal qui détecte le système d'exploitation et lance la configuration appropriée
-- [src/init_conf_macOs.sh](src/init_conf_macOs.sh) : configuration spécifique à macOS (préférences système, Dock, Finder, etc.)
-- [src/init_conf_windows.sh](src/init_conf_windows.sh) : installation des packages via Chocolatey pour Windows
-- [src/install_fonts.sh](src/install_fonts.sh) : installation des polices de caractères (macOS)
-- [src/app.sh](src/app.sh) : gestionnaire d'applications simple pour installer/désinstaller des apps et mettre à jour [src/packages.conf](src/packages.conf)
-- [src/dotfiles.sh](src/dotfiles.sh) : gestionnaire des dotfiles synchronisés via OneDrive, Synology Drive, etc.
-- [src/wifi_from_kdbx.sh](src/wifi_from_kdbx.sh) : import de profils Wi-Fi depuis un vault KeePassXC
+Automatic update schedule (optional):
+- `AUTO_UPDATE_HOUR` — hour in 0-23 (default: 21)
+- `AUTO_UPDATE_MINUTE` — minute in 0-59 (default: 0)
 
-### 🔄 Mise à jour automatique
-- [src/update.sh](src/update.sh) : script de mise à jour des packages
-  - Exécutable manuellement : `bash src/update.sh`
-  - Met à jour automatiquement tous les packages selon le système :
-    - macOS : Homebrew, casks
-    - Windows : Chocolatey
-    - Linux : apt/dnf/yum
+Example `.env.local` additions:
+```dotenv
+AUTO_UPDATE_HOUR=21
+AUTO_UPDATE_MINUTE=0
+```
 
-- [src/setup_auto_update.sh](src/setup_auto_update.sh) : configure la mise à jour automatique quotidienne à 21h00
-  - Utilise launchd sur macOS
-  - Utilise Task Scheduler sur Windows
-  - Utilise cron sur Linux
-  - Commande : `bash src/setup_auto_update.sh`
+`src/setup_auto_update.sh` reads `.env.local` (one level up) and uses these values to configure:
+- macOS: a `launchd` agent (`$HOME/Library/LaunchAgents/...plist`)
+- Windows: a scheduled task via `schtasks` (uses the provided time)
+- Linux: a cron job (uses the provided minute/hour)
 
-## Systèmes supportés
+## Commands using `okc`
 
-### 🍎 macOS
-- Installation via Homebrew
-- Configuration automatique des préférences système
-- Installation de polices personnalisées
-- Mise à jour automatique des packages
+Use `okc` to run repository scripts without typing `bash src/...`.
 
-### 🪟 Windows
-- Installation via Chocolatey (installation automatique si absent)
-- Support de Git Bash, WSL, CYGWIN et MINGW
-- Mise à jour automatique via Task Scheduler
+Dotfiles examples:
+```bash
+okc dotfiles init      # initialize sync
+okc dotfiles setup     # create symlinks
+okc dotfiles sync      # push changes to sync folder
+okc dotfiles restore   # restore from sync folder
+okc dotfiles status    # show status
+```
 
-### 🐧 Linux
-- Détection automatique du gestionnaire de packages (apt, dnf, yum)
-- Mise à jour automatique via cron
+App manager examples:
+```bash
+okc app install firefox
+okc app uninstall firefox
+okc app list
+okc app add some-app
+okc app remove some-app
+```
 
-## Packages inclus
+Automatic updates setup:
+```bash
+okc setup_auto_update
+```
 
-Les packages installés incluent :
-- Outils de développement : Git, Node.js, Docker, VS Code, OpenJDK, etc.
-- Navigateurs : Firefox, Tor Browser
-- Communication : Thunderbird, Signal
-- Sécurité : KeePassXC, Cryptomator, VeraCrypt
-- Productivité : Notion, Obsidian, Postman, Bruno
-- Multimédia : VLC, FFmpeg
-- Utilitaires : 7-Zip, TeamViewer, Transmission
-- Et bien d'autres...
-
-## Configuration de la mise à jour automatique
-
-Pour activer la mise à jour automatique quotidienne à 21h00 :
+If you prefer to run the script directly:
 ```bash
 bash src/setup_auto_update.sh
 ```
 
-### Commandes de gestion
+## Wi‑Fi import from KeePassXC
 
-**macOS** :
+Use `okc` or run the script directly:
 ```bash
-# Désactiver
-launchctl unload ~/Library/LaunchAgents/com.user.packages.update.plist
-
-# Réactiver
-launchctl load ~/Library/LaunchAgents/com.user.packages.update.plist
+okc wifi_from_kdbx --db /path/to/vault.kdbx --group "Wi-Fi"
+# or
+bash src/wifi_from_kdbx.sh --db /path/to/vault.kdbx --group "Wi-Fi"
 ```
 
-**Windows** :
-```cmd
-# Désactiver
-schtasks //Change //TN "PackagesAutoUpdate" //DISABLE
+## Tests
 
-# Réactiver
-schtasks //Change //TN "PackagesAutoUpdate" //ENABLE
-
-# Supprimer
-schtasks //Delete //TN "PackagesAutoUpdate" //F
-```
-
-**Linux** :
+Run local checks:
 ```bash
-# Voir les tâches cron
-crontab -l
-
-# Éditer les tâches cron
-crontab -e
+bash test/test.sh
 ```
 
-## Logs
+## okc — quick helper
 
-Les logs de mise à jour sont sauvegardés dans :
-- `update.log` : sortie standard
-- `update_error.log` : erreurs (macOS uniquement)
+The `okc` script dispatches to `src/<command>.sh` so you can run tasks like `okc init`, `okc app`, `okc dotfiles`.
 
-## Ajouter ou modifier des packages
+Install example (local):
+```bash
+chmod +x okc
+./okc init
+```
 
+Install example (system):
+```bash
+chmod +x okc install_okc.sh
+sudo ./install_okc.sh
+okc init
+```
+
+## License
+
+See [LICENSE](LICENSE)
+
+Run local checks:
+```bash
+bash test/test.sh
+```
+
+## License
+
+See [LICENSE](LICENSE)
 ### Configuration personnalisée (recommandé)
 
 Pour avoir votre propre liste de packages synchronisée entre vos machines :
@@ -456,3 +458,36 @@ GitHub Actions crée la release automatiquement.
 ## License
 
 Voir le fichier [LICENSE](LICENSE)
+
+## okc — utilitaire rapide
+
+Le script `okc` permet d'appeler rapidement les scripts présents dans `src/` sans préfixer par `bash src/...`.
+
+Exemples :
+
+```bash
+okc init                # lance src/init.sh
+okc app install firefox # lance src/app.sh install firefox
+okc dotfiles sync       # lance src/dotfiles.sh sync
+okc packages sync       # alias géré via src/dotfiles.sh packages
+```
+
+Installation recommandée (copie/symlink dans votre PATH) :
+
+```bash
+chmod +x okc install_okc.sh
+./install_okc.sh
+# ou (installation système)
+sudo ./install_okc.sh
+```
+
+Le script `install_okc.sh` installe `okc` dans `/usr/local/bin` si possible, sinon dans `~/.local/bin` et ajoute `~/.local/bin` à `~/.profile` si nécessaire.
+
+Vous pouvez aussi installer manuellement :
+
+```bash
+chmod +x okc
+sudo ln -sf "$PWD/okc" /usr/local/bin/okc
+```
+
+Après installation, exécutez `okc` depuis n'importe où.

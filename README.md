@@ -1,5 +1,4 @@
 # ok_computer
-# ok_computer
 
 Repository to quickly reconfigure a new computer (macOS, Windows, Linux).
 

@@ -88,12 +88,18 @@ add_entry_to_kp() {
         log "[dry-run] would add entry: ${ssid}"
         return 0
     fi
-    # Attempt to add entry: keepassxc-cli add DB GROUP TITLE --username "" --password "..."
-    # If a key file is provided, pass --key-file
+    
+    # Construct the command array
+    local cmd=(keepassxc-cli add "${DB_FILE}" "${GROUP}" "${ssid}" --username "" --password "${pw}" --comment "imported from macOS keychain")
     if [ -n "${KEY_FILE}" ]; then
-        keepassxc-cli add --key-file "${KEY_FILE}" "${DB_FILE}" "${GROUP}" "${ssid}" --username "" --password "${pw}" --comment "imported from macOS keychain"
+        cmd=(keepassxc-cli add --key-file "${KEY_FILE}" "${DB_FILE}" "${GROUP}" "${ssid}" --username "" --password "${pw}" --comment "imported from macOS keychain")
+    fi
+
+    # Execute with password pipe if KEEPASS_DB_PASS is set, otherwise interactive
+    if [ -n "${KEEPASS_DB_PASS:-}" ]; then
+        echo "${KEEPASS_DB_PASS}" | "${cmd[@]}"
     else
-        keepassxc-cli add "${DB_FILE}" "${GROUP}" "${ssid}" --username "" --password "${pw}" --comment "imported from macOS keychain"
+        "${cmd[@]}"
     fi
 }
 

@@ -22,10 +22,12 @@ esac
 
 # Run PyInstaller including templates and static folders
 python -m PyInstaller --name "$NAME" --onefile \
+  --noconsole \
   --add-data "templates${SEP}templates" \
   --add-data "static${SEP}static" \
   --collect-submodules flask \
   --hidden-import socket \
+  --hidden-import webview \
   app.py
 
 echo "Built: dist/$NAME"

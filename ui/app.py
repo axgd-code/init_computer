@@ -5,16 +5,41 @@ import requests
 from pathlib import Path
 import multiprocessing
 import socket
+import webview
+import subprocess
+import threading
+import sys
+import re
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 ENV_LOCAL = BASE_DIR / '.env.local'
+ENV_EXAMPLE = BASE_DIR / '.env.example'
 PACKAGES_CONF = BASE_DIR / 'src' / 'packages.conf'
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
 # Load environment
 def load_env_dict():
-    env = {}
+    # 1. Parse example to get keys and comments
+    schema = []
+    if ENV_EXAMPLE.exists():
+        with ENV_EXAMPLE.open() as f:
+            last_comment = ""
+            for line in f:
+                line = line.strip()
+                if not line:
+                     last_comment = ""
+                     continue
+                if line.startswith('#'):
+                     last_comment += line.lstrip('#').strip() + " "
+                     continue
+                if '=' in line:
+                     k, v = line.split('=', 1)
+                     schema.append({'key': k.strip(), 'default': v.strip().strip('"'), 'desc': last_comment.strip()})
+                     last_comment = ""
+    
+    # 2. Load actual values from .env.local
+    current = {}
     if ENV_LOCAL.exists():
         load_dotenv(dotenv_path=ENV_LOCAL, override=False)
         with ENV_LOCAL.open() as f:
@@ -23,8 +48,24 @@ def load_env_dict():
                 if not line or line.startswith('#') or '=' not in line:
                     continue
                 k,v=line.split('=',1)
-                env[k.strip()]=v.strip().strip('"')
-    return env
+                current[k.strip()]=v.strip().strip('"')
+
+    # Merge
+    final_list = []
+    seen = set()
+    # Add items from schema
+    for item in schema:
+        key = item['key']
+        val = current.get(key, item['default'])
+        final_list.append({'key': key, 'value': val, 'desc': item['desc']})
+        seen.add(key)
+    
+    # Add extra items from current that were not in schema
+    for k, v in current.items():
+        if k not in seen:
+            final_list.append({'key': k, 'value': v, 'desc': 'Custom setting'})
+            
+    return final_list
 
 # Packages parsing
 def read_packages():
@@ -141,6 +182,39 @@ def api_check():
         result['sources']['debian']=False
     return jsonify(result)
 
+@app.route('/api/icon')
+def api_icon():
+    name = request.args.get('name')
+    if not name or name == '-': 
+        return jsonify({'url': ''})
+
+    # Default fallback
+    fallback = f"https://ui-avatars.com/api/?name={name}&background=e1e1e1&color=333&size=64&font-size=0.4&length=2"
+    
+    # 1. Try Homebrew Cask (best for icons)
+    try:
+        r = requests.get(f"https://formulae.brew.sh/api/cask/{name}.json", timeout=1.5)
+        if r.status_code == 200:
+            hp = r.json().get('homepage')
+            if hp:
+                return jsonify({'url': f"https://www.google.com/s2/favicons?domain={hp}&sz=64"})
+    except:
+        pass
+    
+    # 2. Try Chocolatey
+    try:
+        url = f"https://community.chocolatey.org/api/v2/Packages()?$filter=tolower(Id) eq '{name.lower()}'&$select=IconUrl"
+        r = requests.get(url, timeout=1.5)
+        if r.status_code == 200:
+            m = re.search(r'<d:IconUrl>(.+?)</d:IconUrl>', r.text)
+            if m:
+                # Some choco icons are broken or http, assume https for safety if possible or just return
+                return jsonify({'url': m.group(1)})
+    except:
+        pass
+
+    return jsonify({'url': fallback})
+
 @app.route('/api/search')
 def api_search():
     q = request.args.get('q')
@@ -174,16 +248,84 @@ def api_search():
 def static_files(p):
     return send_from_directory(os.path.join(os.path.dirname(__file__),'static'), p)
 
+@app.route('/api/action/update', methods=['POST'])
+def api_action_update():
+    # Run bash src/update.sh
+    script = BASE_DIR / 'src' / 'update.sh'
+    if not script.exists():
+        return jsonify({'error':'update script not found'}), 500
+    try:
+        # Run in background or wait? Wait for now to show status
+        # Note: on Windows this might fail if bash is not in PATH.
+        cmd = ['bash', str(script)]
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        return jsonify({'stdout': res.stdout, 'stderr': res.stderr, 'code': res.returncode})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/action/install', methods=['POST'])
+def api_action_install():
+    data = request.json or {}
+    app_name = data.get('app')
+    if not app_name:
+        return jsonify({'error':'missing app name'}), 400
+    
+    script = BASE_DIR / 'src' / 'app.sh'
+    try:
+        cmd = ['bash', str(script), 'install', app_name]
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        return jsonify({'stdout': res.stdout, 'stderr': res.stderr, 'code': res.returncode})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/action/wifi-export', methods=['POST'])
+def api_action_wifi_export():
+    data = request.json or {}
+    db_path = data.get('db')
+    password = data.get('password')
+    
+    if not db_path:
+        # try loading from env
+        env = load_env_dict()
+        db_path = env.get('WIFI_KDBX_DB')
+    
+    if not db_path:
+         return jsonify({'error':'No DB path provided and WIFI_KDBX_DB not set'}), 400
+    if not password:
+         return jsonify({'error':'Password is required'}), 400
+
+    script = BASE_DIR / 'src' / 'wifi_from_keychain.sh'
+    if not script.exists():
+         return jsonify({'error':'wifi_from_keychain.sh script not found'}), 500
+
+    env = os.environ.copy()
+    env['KEEPASS_DB_PASS'] = password
+    
+    # We pass the DB path as argument
+    cmd = ['bash', str(script), '--db', db_path]
+    
+    try:
+        # Run process
+        res = subprocess.run(cmd, env=env, capture_output=True, text=True)
+        return jsonify({'stdout': res.stdout, 'stderr': res.stderr, 'code': res.returncode})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 def is_port_in_use(port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('localhost', port)) == 0
+
+def start_server(port):
+    debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    app.run(host='0.0.0.0', port=port, debug=debug)
 
 if __name__=='__main__':
     multiprocessing.freeze_support()
     
     port = int(os.environ.get('PORT', 5000))
     if is_port_in_use(port):
-        print(f" * Port {port} is in use. Trying to find another port...")
+        # In --noconsole mode, avoid print() as it might crash on Windows
+        # print(f" * Port {port} is in use. Trying to find another port...")
         if port == 5000:
             port = 5001
         while is_port_in_use(port):
@@ -191,6 +333,13 @@ if __name__=='__main__':
             if port > 5010: # Limit searches
                 break
     
-    debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
-    print(f" * Starting server on http://localhost:{port} (debug={debug})")
-    app.run(host='0.0.0.0', port=port, debug=debug)
+    # Start Flask in a thread
+    t = threading.Thread(target=start_server, args=(port,), daemon=True)
+    t.start()
+
+    # Determine if we are running in a built executable or dev mode
+    # If dev mode, maybe don't open webview if FLASK_DEBUG is on? 
+    # But user wants standalone.
+    
+    window = webview.create_window('ok_computer', f'http://localhost:{port}')
+    webview.start()

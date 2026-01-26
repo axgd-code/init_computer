@@ -1,31 +1,45 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>ok_computer UI</title>
-  <style>
-    body{font-family:Arial,Helvetica,sans-serif;margin:20px}
-    .col{display:inline-block;vertical-align:top;padding:10px;margin-right:20px}
-    table{border-collapse:collapse}
-    td,th{border:1px solid #ddd;padding:6px}
-    .ok{color:green}
-    .nok{color:#b00}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ok_computer</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-  <h2>ok_computer — Admin UI</h2>
-  <div class="col" style="width:420px">
-    <h3>Environment (.env.local)</h3>
-    <div id="env"></div>
-    <button onclick="saveEnv()">Save env</button>
-  </div>
-  <div class="col" style="width:640px">
-    <h3>Packages</h3>
-    <input id="search" placeholder="Search stores" />
-    <button onclick="doSearch()">Search</button>
-    <table id="pkgtbl"><thead><tr><th>Type</th><th>mac</th><th>win</th><th>desc</th><th>status</th></tr></thead><tbody></tbody></table>
-  </div>
+    <div class="container">
+        <h1>ok_computer</h1>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('dashboard')" data-i18n="dashboard">Dashboard</div>
+            <div class="tab" onclick="switchTab('packages')" data-i18n="packages">Packages</div>
+            <div class="tab" onclick="switchTab('search')" data-i18n="search">Search & Install</div>
+            <div class="tab" onclick="switchTab('settings')" data-i18n="settings">Settings</div>
+        </div>
+        
+        <!-- DASHBOARD -->
+        <div id="dashboard" class="tab-content active">
+            {% include 'components/dashboard.html' %}
+        </div>
+        
+        <!-- PACKAGES LIST -->
+        <div id="packages" class="tab-content">
+            {% include 'components/packages.html' %}
+        </div>
+        
+        <!-- SEARCH -->
+        <div id="search" class="tab-content">
+            {% include 'components/search.html' %}
+        </div>
+        
+        <!-- SETTINGS -->
+        <div id="settings" class="tab-content">
+            {% include 'components/settings.html' %}
+        </div>
+    </div>
 
-  <script src="/static/main.js"></script>
+    <!-- Scripts -->
+    <script src="/static/js/i18n.js"></script>
+    <script src="/static/js/app.js"></script>
 </body>
 </html>

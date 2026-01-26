@@ -31,10 +31,14 @@ jobs:
           # choose separator for add-data
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then SEP=';'; else SEP=':'; fi
           python -m PyInstaller --name ok_computer_ui-${{ matrix.os }} --onefile \
+            --noconsole \
             --add-data "ui/templates${SEP}templates" \
             --add-data "ui/static${SEP}static" \
             --collect-submodules flask \
             --hidden-import socket \
+            --hidden-import webview \
+            --hidden-import webview.platforms.cocoa \
+            --hidden-import webview.platforms.winforms \
             ui/app.py
         shell: bash
 

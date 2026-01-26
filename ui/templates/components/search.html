@@ -1,0 +1,13 @@
+<div class="card">
+    <div class="section-title" data-i18n="search_package">Search Package</div>
+    <div style="display:flex; gap:10px;">
+        <input type="text" id="search-input" placeholder="e.g. firefox, git..." data-i18n="search_placeholder">
+        <button onclick="doSearch()" data-i18n="search_btn">Search</button>
+    </div>
+    <select id="search-store" style="margin-top:10px; padding:5px;">
+        <option value="all" data-i18n="all_stores">All Stores</option>
+        <option value="homebrew">Homebrew (Mac)</option>
+        <option value="chocolatey">Chocolatey (Win)</option>
+    </select>
+    <div id="search-results" style="margin-top:20px;"></div>
+</div>

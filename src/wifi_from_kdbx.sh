@@ -23,14 +23,14 @@ usage() {
 ${BLUE}Usage:${NC} bash wifi_from_kdbx.sh --db <file.kdbx> [--group "Wi-Fi"] [--key-file path] [--dry-run] [--ask-pass]
 
 Prerequisites:
-  - keepassxc-cli installé et accessible dans le PATH
-    - Le vault kdbx contient un groupe (par défaut "Wi-Fi")
-    - Title = SSID
-    - Password = clé Wi-Fi
-    - (optionnel) attribut "security" (WPA2/WPA3/OPEN) et "hidden" (true/false)
+    - keepassxc-cli installed and available in PATH
+        - The kdbx vault contains a group (default "Wi-Fi")
+        - Title = SSID
+        - Password = Wi‑Fi key
+        - (optional) attribute "security" (WPA2/WPA3/OPEN) and "hidden" (true/false)
 Notes:
-    - Authentification KeePassXC: par défaut keepassxc-cli demandera le mot de passe en interactif; n'exportez pas de mot de passe dans un fichier. L'option --ask-pass force cette invite même si une variable KEEPASSXC_CLI_PASSWORD est présente.
-    - Sur macOS/Windows/Linux l'outil demande souvent les droits administrateur pour ajouter des profils.
+        - KeePassXC authentication: by default keepassxc-cli will prompt for the password interactively; do not export a password into a file. The --ask-pass option forces this prompt even if a KEEPASSXC_CLI_PASSWORD variable is present.
+        - On macOS/Windows/Linux the tool often requires administrator privileges to add profiles.
 EOF
 }
 
@@ -41,7 +41,7 @@ log_ok() { echo -e "${GREEN}$*${NC}"; }
 
 require_cmd() {
     if ! command -v "$1" >/dev/null 2>&1; then
-        log_error "Commande requise manquante: $1"
+        log_error "Required command missing: $1"
         exit 1
     fi
 }
@@ -77,19 +77,19 @@ add_wifi_macos() {
     local iface
     iface=$(networksetup -listallhardwareports | awk '/Wi-Fi/{getline; print $2; exit}')
     if [ -z "$iface" ]; then
-        log_warn "Interface Wi-Fi introuvable sur macOS"
+        log_warn "Wi‑Fi interface not found on macOS"
         return 1
     fi
     local sec_flag="${security:-WPA2}"
     if $DRY_RUN; then
-        log_info "[dry-run] macOS: ajouter ${ssid} sur ${iface} (${sec_flag})"
+        log_info "[dry-run] macOS: would add ${ssid} on ${iface} (${sec_flag})"
         return 0
     fi
     networksetup -addpreferredwirelessnetworkatindex "$iface" "$ssid" 0 "$sec_flag" "$password"
     if [ "$hidden" = "true" ]; then
         networksetup -setairportpower "$iface" on >/dev/null 2>&1 || true
     fi
-    log_ok "Profil Wi-Fi ajouté (macOS): ${ssid}"
+    log_ok "Wi‑Fi profile added (macOS): ${ssid}"
 }
 
 add_wifi_linux() {
@@ -102,7 +102,7 @@ add_wifi_linux() {
         return 0
     fi
     nmcli dev wifi connect "$ssid" password "$password" ${hidden_flag}
-    log_ok "Profil Wi-Fi ajouté (Linux): ${ssid}"
+    log_ok "Wi‑Fi profile added (Linux): ${ssid}"
 }
 
 add_wifi_windows() {
@@ -152,7 +152,7 @@ EOF
     netsh wlan add profile filename="${tmp}" user=all >/dev/null
     netsh wlan connect name="${ssid}" >/dev/null 2>&1 || true
     rm -f "$tmp"
-    log_ok "Profil Wi-Fi ajouté (Windows): ${ssid}"
+    log_ok "Wi‑Fi profile added (Windows): ${ssid}"
 }
 
 main() {
@@ -171,7 +171,7 @@ main() {
             -h|--help)
                 usage; exit 0;;
             *)
-                log_error "Option inconnue: $1"; usage; exit 1;;
+                log_error "Unknown option: $1"; usage; exit 1;;
         esac
     done
 
@@ -179,7 +179,7 @@ main() {
         usage; exit 1
     fi
     if [ ! -f "$DB_FILE" ]; then
-        log_error "Fichier kdbx introuvable: $DB_FILE"; exit 1
+        log_error "kdbx file not found: $DB_FILE"; exit 1
     fi
 
     if $ASK_PASS; then
@@ -190,11 +190,11 @@ main() {
 
     local os machine
     machine=$(os_detect)
-    log_info "Système détecté: ${machine}"
+    log_info "Detected system: ${machine}"
 
     mapfile -t entries < <(list_entries || true)
     if [ ${#entries[@]} -eq 0 ]; then
-        log_warn "Aucune entrée trouvée dans ${GROUP}"; exit 0
+        log_warn "No entries found in ${GROUP}"; exit 0
     fi
 
     for entry in "${entries[@]}"; do
@@ -202,7 +202,7 @@ main() {
         local pw security hidden
         pw=$(kp_attr password "$path")
         if [ -z "$pw" ]; then
-            log_warn "Mot de passe manquant pour ${entry}, ignoré"
+            log_warn "Password missing for ${entry}, skipped"
             continue
         fi
         security=$(kp_attr security "$path" | tr '[:lower:]' '[:upper:]')
@@ -211,12 +211,12 @@ main() {
             true|yes|1) hidden="true";;
             *) hidden="false";;
         esac
-        log_info "Injection SSID: ${entry} (security=${security:-auto}, hidden=${hidden})"
+        log_info "Injecting SSID: ${entry} (security=${security:-auto}, hidden=${hidden})"
         case "$machine" in
             Mac) add_wifi_macos "$entry" "$pw" "$security" "$hidden";;
             Linux) add_wifi_linux "$entry" "$pw" "$security" "$hidden";;
             Windows) add_wifi_windows "$entry" "$pw" "$security" "$hidden";;
-            *) log_error "OS non supporté"; exit 1;;
+            *) log_error "Unsupported OS"; exit 1;;
         esac
     done
 }

@@ -390,29 +390,29 @@ Synchronisez vos paramètres, thème et extensions VS Code :
 ✅ Non commité : le chemin personnel n'est pas dans le repo
 ✅ Symlinks : les fichiers sont liés, pas copiés
 
-## Wi-Fi depuis KeePassXC
+## Wi-Fi from KeePassXC
 
-Importez vos mots de passe Wi-Fi depuis un vault KeePassXC pour macOS, Windows ou Linux.
+Import your Wi‑Fi passwords from a KeePassXC vault for macOS, Windows, or Linux.
 
-Pré-requis : keepassxc-cli installé, vault kdbx avec un groupe (par défaut "Wi-Fi") où le Title = SSID et le Password = clé Wi-Fi. Attributs optionnels : "security" (WPA2/WPA3/OPEN) et "hidden" (true/false).
+Prerequisites: keepassxc-cli installed and available in PATH. The kdbx vault should contain a group (default "Wi‑Fi") where Title = SSID and Password = Wi‑Fi key. Optional attributes: "security" (WPA2/WPA3/OPEN) and "hidden" (true/false).
 
-Exemple d'exécution :
+Example:
 ```bash
-bash src/wifi_from_kdbx.sh --db /chemin/vers/vault.kdbx --group "Wi-Fi"
+bash src/wifi_from_kdbx.sh --db /path/to/vault.kdbx --group "Wi‑Fi"
 ```
 
-Variables dans `.env.local` (optionnel, utilisées par [src/init.sh](src/init.sh) pour lancer l'import automatiquement en fin de run) :
-- `WIFI_KDBX_DB="/chemin/vers/vault.kdbx"`
-- `WIFI_KDBX_GROUP="Wi-Fi"` (par défaut)
-- `WIFI_KDBX_KEY_FILE="/chemin/vers/clef.key"` (si besoin)
-- `WIFI_KDBX_ASK_PASS=1` pour forcer la saisie interactive (pas de mot de passe dans un fichier/env)
-- `WIFI_KDBX_DRY_RUN=1` pour simuler
+Optional `.env.local` variables (used by [src/init.sh](src/init.sh) to run import automatically at the end of initialization):
+- `WIFI_KDBX_DB="/path/to/vault.kdbx"`
+- `WIFI_KDBX_GROUP="Wi‑Fi"` (default)
+- `WIFI_KDBX_KEY_FILE="/path/to/keyfile.key"` (if needed)
+- `WIFI_KDBX_ASK_PASS=1` to force interactive password prompt (do not store passwords in files/env)
+- `WIFI_KDBX_DRY_RUN=1` to simulate actions
 
-Options utiles :
-- `--key-file <fichier>` : si le vault utilise un keyfile
-- `--dry-run` : affiche les actions sans modifier le système
-- Authentification : laissez keepassxc-cli demander le mot de passe, ou exportez `KEEPASSXC_CLI_PASSWORD` avant d'exécuter le script
-- Voir le script : [src/wifi_from_kdbx.sh](src/wifi_from_kdbx.sh)
+Useful options:
+- `--key-file <file>` : if the vault uses a keyfile
+- `--dry-run` : show actions without modifying the system
+- Authentication: let keepassxc-cli prompt for the password, or export `KEEPASSXC_CLI_PASSWORD` before running the script
+- See the script: [src/wifi_from_kdbx.sh](src/wifi_from_kdbx.sh)
 
 ## Tests des scripts
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "=== Mise à jour automatique des packages - $(date) ==="
+echo "=== Auto update packages - $(date) ==="
 
 # Détection du système d'exploitation
 OS="$(uname -s)"
@@ -13,79 +13,79 @@ case "${OS}" in
     *)          MACHINE="UNKNOWN:${OS}"
 esac
 
-echo "Système détecté: ${MACHINE}"
+echo "Detected system: ${MACHINE}"
 
 if [ "${MACHINE}" = "Mac" ]; then
-    echo "Mise à jour via Homebrew..."
+    echo "Updating via Homebrew..."
     
     # Vérifier si Homebrew est installé
     if command -v brew &> /dev/null; then
-        echo "  - Mise à jour de Homebrew..."
+        echo "  - Updating Homebrew..."
         brew update
         
-        echo "  - Mise à jour des packages..."
+        echo "  - Upgrading packages..."
         brew upgrade
         
-        echo "  - Mise à jour des casks..."
+        echo "  - Upgrading casks..."
         brew upgrade --cask --greedy
         
-        echo "  - Nettoyage..."
+        echo "  - Cleaning..."
         brew cleanup
         
-        echo "  - Vérification de l'état du système..."
+        echo "  - Checking system status..."
         brew doctor || true
         
-        echo "✓ Mise à jour macOS terminée"
+        echo "✓ macOS update completed"
     else
-        echo "✗ Homebrew n'est pas installé"
+        echo "✗ Homebrew is not installed"
         exit 1
     fi
 
 elif [ "${MACHINE}" = "Windows" ]; then
-    echo "Mise à jour via Chocolatey..."
+    echo "Updating via Chocolatey..."
     
     # Vérifier si Chocolatey est installé
     if command -v choco &> /dev/null; then
-        echo "  - Mise à jour de tous les packages..."
+        echo "  - Upgrading all packages..."
         choco upgrade all -y
         
-        echo "✓ Mise à jour Windows terminée"
+        echo "✓ Windows update completed"
     else
-        echo "✗ Chocolatey n'est pas installé"
+        echo "✗ Chocolatey is not installed"
         exit 1
     fi
 
 elif [ "${MACHINE}" = "Linux" ]; then
-    echo "Mise à jour Linux..."
+    echo "Updating Linux..."
     
     # Détecter le gestionnaire de packages
     if command -v apt-get &> /dev/null; then
-        echo "  - Mise à jour via apt..."
+        echo "  - Updating via apt..."
         sudo apt-get update
         sudo apt-get upgrade -y
         sudo apt-get autoremove -y
         sudo apt-get autoclean
-        echo "✓ Mise à jour Linux (apt) terminée"
+        echo "✓ Linux update (apt) completed"
         
     elif command -v dnf &> /dev/null; then
-        echo "  - Mise à jour via dnf..."
+        echo "  - Updating via dnf..."
         sudo dnf upgrade -y
         sudo dnf autoremove -y
-        echo "✓ Mise à jour Linux (dnf) terminée"
+        echo "✓ Linux update (dnf) completed"
         
     elif command -v yum &> /dev/null; then
-        echo "  - Mise à jour via yum..."
+        echo "  - Updating via yum..."
         sudo yum update -y
         sudo yum autoremove -y
-        echo "✓ Mise à jour Linux (yum) terminée"
+        echo "✓ Linux update (yum) completed"
         
     else
-        echo "✗ Aucun gestionnaire de packages reconnu"
+        echo "✗ No recognized package manager"
         exit 1
     fi
 else
-    echo "✗ Système d'exploitation non supporté: ${MACHINE}"
+    echo "✗ Unsupported operating system: ${MACHINE}"
     exit 1
 fi
 
-echo "=== Mise à jour terminée à $(date) ==="
+echo "=== Update finished at $(date) ==="

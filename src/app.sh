@@ -78,20 +78,20 @@ install_app() {
     local app=$1
     local type=$2
     
-    echo -e "${BLUE}Installation de ${GREEN}${app}${NC}...\n"
-    
+    echo -e "${BLUE}Installing ${GREEN}${app}${NC}...\n"
+
     # Check availability before installing
-    echo -e "${BLUE}Vérification de la disponibilité...${NC}"
+    echo -e "${BLUE}Checking availability...${NC}"
     if ! check_homebrew_api "${app}" "${type}" && ! check_chocolatey_api "${app}"; then
-        echo -e "${YELLOW}⚠ Attention: ${app} n'a pas été trouvé dans les dépôts publics${NC}"
-        echo -e "${YELLOW}L'installation pourrait échouer. Continuer? (y/n)${NC}"
+        echo -e "${YELLOW}⚠ Warning: ${app} was not found in public repositories${NC}"
+        echo -e "${YELLOW}Installation may fail. Continue? (y/n)${NC}"
         read -r response
         if [ "${response}" != "y" ] && [ "${response}" != "Y" ]; then
-            echo -e "${RED}Installation annulée${NC}"
+            echo -e "${RED}Installation cancelled${NC}"
             return 1
         fi
     else
-        echo -e "${GREEN}✓ Package vérifié${NC}\n"
+        echo -e "${GREEN}✓ Package verified${NC}\n"
     fi
     
     if [ "${MACHINE}" = "Mac" ]; then
@@ -103,18 +103,18 @@ install_app() {
                 echo "  → Installation via Homebrew..."
                 brew install "${app}"
             fi
-            echo -e "${GREEN}✓ Installation réussie${NC}"
+            echo -e "${GREEN}✓ Installed successfully${NC}"
         else
-            echo -e "${RED}✗ Homebrew n'est pas installé${NC}"
+            echo -e "${RED}✗ Homebrew is not installed${NC}"
             exit 1
         fi
     elif [ "${MACHINE}" = "Windows" ]; then
         if command -v choco &> /dev/null; then
             echo "  → Installation via Chocolatey..."
             choco install -y "${app}"
-            echo -e "${GREEN}✓ Installation réussie${NC}"
+            echo -e "${GREEN}✓ Installed successfully${NC}"
         else
-            echo -e "${RED}✗ Chocolatey n'est pas installé${NC}"
+            echo -e "${RED}✗ Chocolatey is not installed${NC}"
             exit 1
         fi
     elif [ "${MACHINE}" = "Linux" ]; then
@@ -122,13 +122,13 @@ install_app() {
             echo "  → Installation via apt..."
             sudo apt-get update
             sudo apt-get install -y "${app}"
-            echo -e "${GREEN}✓ Installation réussie${NC}"
+            echo -e "${GREEN}✓ Installed successfully${NC}"
         elif command -v dnf &> /dev/null; then
             echo "  → Installation via dnf..."
             sudo dnf install -y "${app}"
-            echo -e "${GREEN}✓ Installation réussie${NC}"
+            echo -e "${GREEN}✓ Installed successfully${NC}"
         else
-            echo -e "${RED}✗ Gestionnaire de packages non trouvé${NC}"
+            echo -e "${RED}✗ Package manager not found${NC}"
             exit 1
         fi
     fi
@@ -137,7 +137,7 @@ install_app() {
 # Function to check if an app is a cask
 is_cask_app() {
     local app=$1
-    # Vérifier via l'API Homebrew
+    # Check via Homebrew API
     curl -s "https://formulae.brew.sh/api/cask/${app}.json" 2>/dev/null | grep -q '"token"' && return 0
     return 1
 }
@@ -146,38 +146,38 @@ is_cask_app() {
 uninstall_app() {
     local app=$1
     
-    echo -e "${BLUE}Désinstallation de ${GREEN}${app}${NC}..."
+    echo -e "${BLUE}Uninstalling ${GREEN}${app}${NC}..."
     
     if [ "${MACHINE}" = "Mac" ]; then
         if command -v brew &> /dev/null; then
-            # Vérifier si c'est un cask ou un brew
+            # Check if it's a cask or a brew
             if brew list --cask "${app}" &> /dev/null; then
-                echo "  → Désinstallation via Homebrew cask..."
+                echo "  → Uninstall via Homebrew cask..."
                 brew uninstall --cask "${app}"
             elif brew list "${app}" &> /dev/null; then
-                echo "  → Désinstallation via Homebrew..."
+                echo "  → Uninstall via Homebrew..."
                 brew uninstall "${app}"
             else
-                echo -e "${YELLOW}⚠ Application ${app} non trouvée${NC}"
+                echo -e "${YELLOW}⚠ Application ${app} not found${NC}"
                 return 1
             fi
-            echo -e "${GREEN}✓ Désinstallation réussie${NC}"
+            echo -e "${GREEN}✓ Uninstalled successfully${NC}"
         fi
     elif [ "${MACHINE}" = "Windows" ]; then
         if command -v choco &> /dev/null; then
-            echo "  → Désinstallation via Chocolatey..."
+            echo "  → Uninstall via Chocolatey..."
             choco uninstall -y "${app}"
-            echo -e "${GREEN}✓ Désinstallation réussie${NC}"
+            echo -e "${GREEN}✓ Uninstalled successfully${NC}"
         fi
     elif [ "${MACHINE}" = "Linux" ]; then
         if command -v apt-get &> /dev/null; then
-            echo "  → Désinstallation via apt..."
+            echo "  → Uninstall via apt..."
             sudo apt-get remove -y "${app}"
-            echo -e "${GREEN}✓ Désinstallation réussie${NC}"
+            echo -e "${GREEN}✓ Uninstalled successfully${NC}"
         elif command -v dnf &> /dev/null; then
-            echo "  → Désinstallation via dnf..."
+            echo "  → Uninstall via dnf..."
             sudo dnf remove -y "${app}"
-            echo -e "${GREEN}✓ Désinstallation réussie${NC}"
+            echo -e "${GREEN}✓ Uninstalled successfully${NC}"
         fi
     fi
 }
@@ -187,42 +187,42 @@ check_availability() {
     local app=$1
     local type=$2
     
-    echo -e "${BLUE}Vérification de la disponibilité de ${GREEN}${app}${NC}...\n"
+    echo -e "${BLUE}Checking availability of ${GREEN}${app}${NC}...\n"
     
     local mac_available=false
     local win_available=false
     local linux_available=false
     
-    # Vérifier sur macOS via API Homebrew
-    echo "  → Vérification sur macOS..."
+    # Check on macOS via Homebrew API
+    echo "  → Checking on macOS..."
     if check_homebrew_api "${app}" "${type}"; then
-        echo -e "    ${GREEN}✓ Disponible via Homebrew${NC}"
+        echo -e "    ${GREEN}✓ Available via Homebrew${NC}"
         mac_available=true
     else
-        echo -e "    ${RED}✗ Non trouvé sur Homebrew${NC}"
+        echo -e "    ${RED}✗ Not found on Homebrew${NC}"
     fi
     
-    # Vérifier sur Windows via API Chocolatey
-    echo "  → Vérification sur Windows..."
+    # Check on Windows via Chocolatey API
+    echo "  → Checking on Windows..."
     if check_chocolatey_api "${app}"; then
-        echo -e "    ${GREEN}✓ Disponible via Chocolatey${NC}"
+        echo -e "    ${GREEN}✓ Available via Chocolatey${NC}"
         win_available=true
     else
-        echo -e "    ${RED}✗ Non trouvé sur Chocolatey${NC}"
+        echo -e "    ${RED}✗ Not found on Chocolatey${NC}"
     fi
     
-    # Vérifier sur Linux
-    echo "  → Vérification sur Linux..."
+    # Check on Linux
+    echo "  → Checking on Linux..."
     if check_linux_availability "${app}"; then
-        echo -e "    ${GREEN}✓ Disponible sur Linux${NC}"
+        echo -e "    ${GREEN}✓ Available on Linux${NC}"
         linux_available=true
     else
-        echo -e "    ${RED}✗ Non trouvé sur Linux${NC}"
+        echo -e "    ${RED}✗ Not found on Linux${NC}"
     fi
     
     # Résumé
     echo ""
-    echo "Résumé de disponibilité:"
+    echo "Availability summary:"
     printf "  macOS:   "
     [ "${mac_available}" = true ] && echo -e "${GREEN}✓${NC}" || echo -e "${RED}✗${NC}"
     printf "  Windows: "
@@ -243,12 +243,12 @@ check_homebrew_api() {
     local app=$1
     local type=$2
     
-    # Vérifier dans les formulas (brew install)
+    # Check in formulas (brew install)
     if curl -s "https://formulae.brew.sh/api/formula/${app}.json" 2>/dev/null | grep -q '"name"'; then
         return 0
     fi
     
-    # Vérifier dans les casks (brew install --cask)
+    # Check in casks (brew install --cask)
     if [ "${type}" = "cask" ] || [ "${type}" = "auto" ]; then
         if curl -s "https://formulae.brew.sh/api/cask/${app}.json" 2>/dev/null | grep -q '"token"'; then
             return 0
@@ -274,7 +274,7 @@ check_chocolatey_api() {
 check_linux_availability() {
     local app=$1
     
-    # Vérifier sur le système local si on est sur Linux
+    # Check on the local system if we're on Linux
     if [ "${MACHINE}" = "Linux" ]; then
         if command -v apt-cache &> /dev/null; then
             apt-cache search "^${app}$" 2>/dev/null | grep -q "^${app} " && return 0
@@ -284,8 +284,8 @@ check_linux_availability() {
             yum search "${app}" 2>/dev/null | grep -q "^${app}\..*" && return 0
         fi
     else
-        # Si on n'est pas sur Linux, on peut faire une requête simple
-        # Debian Packages API
+        # If we're not on Linux, we can make a simple query
+            # Debian Packages API
         if curl -s "https://packages.debian.org/search?keywords=${app}&searchon=names&suite=stable&section=all" 2>/dev/null | grep -q "Exact hits"; then
             return 0
         fi
@@ -302,37 +302,37 @@ add_to_conf() {
     
     # Check if the app already exists
     if grep -q "^[^#]*|${app}|" "${PACKAGES_CONF}"; then
-        echo -e "${YELLOW}⚠ ${app} existe déjà dans packages.conf${NC}"
+        echo -e "${YELLOW}⚠ ${app} already exists in packages.conf${NC}"
         return 1
     fi
     
-    echo -e "${BLUE}Vérification de la disponibilité pour compléter packages.conf...${NC}"
+    echo -e "${BLUE}Checking availability to update packages.conf...${NC}"
     
-    # Vérifier la disponibilité sur chaque plateforme
+    # Check availability on each platform
     local mac_available=false
     local win_available=false
     
-    # Vérifier macOS
+    # Check macOS
     if check_homebrew_api "${app}" "${type}"; then
         mac_available=true
-        echo -e "  ${GREEN}✓${NC} Disponible sur macOS"
+        echo -e "  ${GREEN}✓${NC} Available on macOS"
     else
-        echo -e "  ${RED}✗${NC} Non disponible sur macOS"
+        echo -e "  ${RED}✗${NC} Not available on macOS"
     fi
     
-    # Vérifier Windows
+    # Check Windows
     if check_chocolatey_api "${app}"; then
         win_available=true
-        echo -e "  ${GREEN}✓${NC} Disponible sur Windows"
+        echo -e "  ${GREEN}✓${NC} Available on Windows"
     else
-        echo -e "  ${RED}✗${NC} Non disponible sur Windows"
+        echo -e "  ${RED}✗${NC} Not available on Windows"
     fi
     
     # Determine type if set to auto
     if [ "${type}" = "auto" ]; then
         if [ "${mac_available}" = true ]; then
-            type="cask"  # Par défaut, utilise cask pour macOS si disponible
-            # Vérifier si c'est en formula plutôt qu'en cask
+            type="cask"  # By default, use cask for macOS if available
+            # Check if it's a formula rather than a cask
             if ! curl -s "https://formulae.brew.sh/api/cask/${app}.json" 2>/dev/null | grep -q '"token"'; then
                 type="brew"
             fi
@@ -355,11 +355,11 @@ add_to_conf() {
     
     # If no platform has it, display a warning
     if [ "${mac_name}" = "-" ] && [ "${win_name}" = "-" ]; then
-        echo -e "${RED}⚠ ${app} n'a été trouvé sur aucune plateforme${NC}"
-        echo -e "${YELLOW}Voulez-vous quand même l'ajouter? (y/n)${NC}"
+        echo -e "${YELLOW}⚠ ${app} was not found on any platform${NC}"
+        echo -e "${YELLOW}Do you still want to add it? (y/n)${NC}"
         read -r response
         if [ "${response}" != "y" ] && [ "${response}" != "Y" ]; then
-            echo -e "${RED}Ajout annulé${NC}"
+            echo -e "${RED}Add cancelled${NC}"
             return 1
         fi
     fi
@@ -368,17 +368,17 @@ add_to_conf() {
     local entry="${type}|${mac_name}|${win_name}|${app}"
     echo "${entry}" >> "${PACKAGES_CONF}"
     
-    echo -e "${GREEN}✓ ${app} ajouté à packages.conf${NC}"
-    echo -e "  Entrée: ${entry}"
+    echo -e "${GREEN}✓ ${app} added to packages.conf${NC}"
+    echo -e "  Entry: ${entry}"
 }
 
 # Function to remove an application from packages.conf
 remove_from_conf() {
     local app=$1
     
-    # Vérifier si l'app existe
+    # Check if the app exists
     if ! grep -q "^[^#]*|${app}|" "${PACKAGES_CONF}"; then
-        echo -e "${YELLOW}⚠ ${app} n'existe pas dans packages.conf${NC}"
+        echo -e "${YELLOW}⚠ ${app} does not exist in packages.conf${NC}"
         return 1
     fi
     
@@ -386,12 +386,12 @@ remove_from_conf() {
     grep -v "^[^#]*|${app}|" "${PACKAGES_CONF}" > "${PACKAGES_CONF}.tmp"
     mv "${PACKAGES_CONF}.tmp" "${PACKAGES_CONF}"
     
-    echo -e "${GREEN}✓ ${app} supprimé de packages.conf${NC}"
+    echo -e "${GREEN}✓ ${app} removed from packages.conf${NC}"
 }
 
 # Function to list applications
 list_apps() {
-    echo -e "${BLUE}Applications dans packages.conf:${NC}\n"
+    echo -e "${BLUE}Applications in packages.conf:${NC}\n"
     
     awk -F'|' '
     BEGIN { count = 0 }
@@ -401,7 +401,7 @@ list_apps() {
         win = $3
         desc = $4
         
-        # Afficher le type avec couleur
+        # Display type with color
         if (type == "tap") {
             type_display = "\033[36mtap\033[0m"
         } else if (type == "brew") {

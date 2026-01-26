@@ -1,0 +1,79 @@
+# Configuration unifiée des packages
+# Format: TYPE|NOM_MAC|NOM_WINDOWS|DESCRIPTION
+# TYPE: brew, cask, tap, mas (pour macOS uniquement)
+# Si un package n'existe pas sur une plateforme, mettre "-"
+
+# Taps (macOS uniquement)
+tap|buo/cask-upgrade|-|Brew cask upgrade
+tap|homebrew/autoupdate|-|Brew autoupdate
+tap|homebrew/bundle|-|Brew bundle
+tap|krtirtho/apps|-|Krtirtho apps
+
+# Outils système de base
+brew|mas|-|Mac App Store CLI
+brew|zsh|-|Zsh shell
+brew|findutils|findutils|Find utilities
+brew|coreutils|coreutils|Core utilities
+brew|brew-pip|-|Brew pip
+brew|bash|bash|Bash shell
+brew|cask|-|Cask
+
+# Outils réseau et système
+brew|exiftool|-|ExifTool
+brew|srt|-|SRT
+brew|ffmpeg|ffmpeg|FFmpeg
+brew|gawk|-|GNU Awk
+brew|gh|gh|GitHub CLI
+brew|ghostscript|-|Ghostscript
+brew|git|git|Git
+brew|nghttp2|-|HTTP/2 C Library
+brew|node|nodejs|Node.js
+brew|pandoc|pandoc|Pandoc
+brew|nmap|nmap|Network mapper
+brew|openjdk|openjdk|OpenJDK
+brew|wget|wget|Wget
+brew|wireguard-tools|-|WireGuard tools
+brew|curl|-|Curl
+
+# Applications (cask pour macOS, choco pour Windows)
+cask|appcleaner|-|AppCleaner
+cask|bruno|bruno|Bruno API client
+cask|cryptomator|cryptomator|Cryptomator
+cask|docker|docker-desktop|Docker
+cask|firefox|firefox|Firefox
+cask|keepassxc|keepassxc|KeePassXC (inclut keepassxc-cli)
+cask|keka|7zip|Archive tool
+cask|macfuse|-|macFUSE
+cask|obsidian|obsidian|Obsidian
+cask|onedrive|onedrive|OneDrive
+cask|signal|signal|Signal
+cask|rectangle|-|Rectangle
+cask|teamviewer|teamviewer|TeamViewer
+cask|the-unarchiver|-|The Unarchiver
+cask|transmission|transmission|Transmission
+cask|veracrypt|veracrypt|VeraCrypt
+cask|visual-studio-code|vscode|Visual Studio Code
+cask|vlc|vlc|VLC
+cask|synology-drive|-|Synology Drive
+cask|tor-browser|tor-browser|Tor Browser
+cask|steam|steam|Steam
+cask|nvidia-geforce-now|nvidia-geforce-now|GeForce NOW
+cask|arc|-|Arc Browser
+cask|mactex-no-gui|-|MacTeX (no GUI)
+cask|google-chrome|googlechrome|Google Chrome
+cask|lm-studio|-|LM Studio
+cask|mole|-|Mole
+
+# Sécurité (macOS)
+cask|lulu|-|LuLu Firewall
+cask|knockknock|-|KnockKnock
+cask|dhs|-|Do Not Disturb
+cask|oversight|-|OverSight
+
+# Polices
+cask|font-clear-sans|-|Clear Sans font
+cask|font-montserrat|-|Montserrat font
+cask|font-inconsolata-nerd-font|-|Inconsolata Nerd Font
+cask|font-open-sans|-|Open Sans font
+cask|font-poppins|-|Poppins font
+cask|font-roboto|-|Roboto font

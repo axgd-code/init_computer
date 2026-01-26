@@ -42,18 +42,20 @@ ${BLUE}Commands:${NC}
   ${GREEN}status${NC}             Show dotfiles status
   ${GREEN}list${NC}               List tracked dotfiles
   ${GREEN}config${NC}             Show current configuration
+  ${GREEN}packages${NC}           Manage packages.conf synchronization
   ${GREEN}obsidian${NC}           Manage Obsidian vault synchronization
   ${GREEN}vscode${NC}             Manage VS Code settings synchronization
   ${GREEN}--help${NC}             Show this help
 
 ${BLUE}Configuration:${NC}
-  Edit ${ENV_FILE} to set SYNC_DIR, OBSIDIAN_VAULT, VSCODE_CONFIG
+  Edit ${ENV_FILE} to set SYNC_DIR, PACKAGES_CONF_DIR, OBSIDIAN_VAULT, VSCODE_CONFIG
 
 ${BLUE}Dotfiles tracked:${NC}
   - .bashrc / .zshrc
   - .gitconfig
   - .ssh/config
   - .vimrc / .config/nvim
+  - packages.conf
   - Obsidian vault
   - VS Code settings
 EOF
@@ -437,6 +439,73 @@ manage_vscode() {
     esac
 }
 
+# Gérer packages.conf
+manage_packages() {
+    local cmd="${1:-status}"
+    
+    if [ -z "${PACKAGES_CONF_DIR}" ]; then
+        echo -e "${YELLOW}⚠ PACKAGES_CONF_DIR n'est pas défini dans ${ENV_FILE}${NC}"
+        echo -e "${BLUE}Exemple: PACKAGES_CONF_DIR=\"\$HOME/OneDrive/ok_computer\"${NC}"
+        return 1
+    fi
+    
+    if [ ! -d "${PACKAGES_CONF_DIR}" ]; then
+        echo -e "${YELLOW}⚠ Dossier n'existe pas: ${PACKAGES_CONF_DIR}${NC}"
+        echo -e "${BLUE}Création du dossier...${NC}"
+        mkdir -p "${PACKAGES_CONF_DIR}"
+    fi
+    
+    local SOURCE_CONF="${SCRIPT_DIR}/packages.conf"
+    local EXAMPLE_CONF="${SCRIPT_DIR}/packages.conf.example"
+    local REMOTE_CONF="${PACKAGES_CONF_DIR}/packages.conf"
+    
+    case "${cmd}" in
+        sync)
+            echo -e "${BLUE}Synchronisation de packages.conf vers ${PACKAGES_CONF_DIR}...${NC}"
+            if [ -f "${SOURCE_CONF}" ]; then
+                cp "${SOURCE_CONF}" "${REMOTE_CONF}"
+                echo -e "${GREEN}✓ packages.conf synchronisé${NC}"
+            elif [ -f "${EXAMPLE_CONF}" ]; then
+                cp "${EXAMPLE_CONF}" "${REMOTE_CONF}"
+                echo -e "${GREEN}✓ packages.conf.example copié comme base${NC}"
+            else
+                echo -e "${RED}✗ Aucun fichier packages.conf trouvé${NC}"
+                return 1
+            fi
+            ;;
+        restore)
+            echo -e "${BLUE}Restauration de packages.conf depuis ${PACKAGES_CONF_DIR}...${NC}"
+            if [ -f "${REMOTE_CONF}" ]; then
+                cp "${REMOTE_CONF}" "${SOURCE_CONF}"
+                echo -e "${GREEN}✓ packages.conf restauré${NC}"
+            else
+                echo -e "${YELLOW}⚠ Aucun packages.conf distant trouvé${NC}"
+                if [ -f "${EXAMPLE_CONF}" ]; then
+                    echo -e "${BLUE}Copie de l'exemple...${NC}"
+                    cp "${EXAMPLE_CONF}" "${SOURCE_CONF}"
+                    echo -e "${GREEN}✓ packages.conf créé depuis l'exemple${NC}"
+                fi
+            fi
+            ;;
+        status)
+            echo -e "${BLUE}Statut packages.conf:${NC}"
+            echo -e "  Dossier synchronisé: ${GREEN}${PACKAGES_CONF_DIR}${NC}"
+            if [ -f "${REMOTE_CONF}" ]; then
+                local line_count=$(wc -l < "${REMOTE_CONF}" 2>/dev/null | tr -d ' ')
+                echo -e "  Fichier distant: ${GREEN}${REMOTE_CONF}${NC} (${line_count} lignes)"
+            else
+                echo -e "  Fichier distant: ${YELLOW}non trouvé${NC}"
+            fi
+            if [ -f "${SOURCE_CONF}" ]; then
+                local line_count=$(wc -l < "${SOURCE_CONF}" 2>/dev/null | tr -d ' ')
+                echo -e "  Fichier local: ${GREEN}${SOURCE_CONF}${NC} (${line_count} lignes)"
+            else
+                echo -e "  Fichier local: ${YELLOW}utilise packages.conf.example${NC}"
+            fi
+            ;;
+    esac
+}
+
 case "$1" in
     init)
         init_sync
@@ -472,6 +541,9 @@ case "$1" in
         ;;
     vscode)
         manage_vscode "${2:-status}"
+        ;;
+    packages)
+        manage_packages "${2:-status}"
         ;;
     *)
         echo -e "${RED}✗ Commande inconnue: $1${NC}"

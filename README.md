@@ -1,4 +1,4 @@
-# init_computer
+# ok_computer
 
 Simple repo pour ré-installer plus vite un ordinateur neuf (macOS, Windows, Linux).
 
@@ -9,12 +9,12 @@ Simple repo pour ré-installer plus vite un ordinateur neuf (macOS, Windows, Lin
 Télécharger la dernière release :
 ```bash
 curl -fsSL -o init-computer.tar.gz \
-  https://github.com/axgd-code/init_computer/releases/download/$(curl -s https://api.github.com/repos/axgd-code/init_computer/releases/latest | grep tag_name | cut -d'"' -f4)/init-mac-scripts.tar.gz
+  https://github.com/axgd-code/ok_computer/releases/download/$(curl -s https://api.github.com/repos/axgd-code/ok_computer/releases/latest | grep tag_name | cut -d'"' -f4)/init-mac-scripts.tar.gz
 tar -xzf init-computer.tar.gz
 bash init.sh
 ```
 
-Ou télécharger manuellement depuis [releases](https://github.com/axgd-code/init_computer/releases), puis :
+Ou télécharger manuellement depuis [releases](https://github.com/axgd-code/ok_computer/releases), puis :
 ```bash
 tar -xzf init-mac-scripts.tar.gz
 bash init.sh
@@ -24,8 +24,8 @@ bash init.sh
 
 Cloner et exécuter depuis les sources :
 ```bash
-git clone https://github.com/axgd-code/init_computer.git
-cd init_computer
+git clone https://github.com/axgd-code/ok_computer.git
+cd ok_computer
 bash src/init.sh
 ```
 
@@ -148,9 +148,43 @@ Les logs de mise à jour sont sauvegardés dans :
 
 ## Ajouter ou modifier des packages
 
+### Configuration personnalisée (recommandé)
+
+Pour avoir votre propre liste de packages synchronisée entre vos machines :
+
+1. Créer le fichier `.env.local` depuis l'exemple :
+```bash
+cp .env.example .env.local
+```
+
+2. Éditer `.env.local` et définir le chemin de synchronisation :
+```bash
+PACKAGES_CONF_DIR="$HOME/OneDrive/ok_computer"
+# ou
+PACKAGES_CONF_DIR="$HOME/SynologyDrive/ok_computer"
+```
+
+3. Synchroniser votre fichier packages.conf personnalisé :
+```bash
+# Copier la liste actuelle vers le dossier synchronisé
+bash src/dotfiles.sh packages sync
+
+# Ou restaurer depuis le dossier synchronisé
+bash src/dotfiles.sh packages restore
+
+# Voir le statut
+bash src/dotfiles.sh packages status
+```
+
+**Avantages** :
+- ✅ Votre liste de packages est synchronisée automatiquement via OneDrive/Synology
+- ✅ Même configuration sur tous vos ordinateurs
+- ✅ Le fichier `packages.conf` local est ignoré par Git (personnel)
+- ✅ Le repository contient seulement `packages.conf.example` comme référence
+
 ### Méthode 1 : Édition manuelle
 
-Éditez le fichier [src/packages.conf](src/packages.conf) en respectant le format :
+Éditez votre fichier packages.conf (synchronisé ou local dans `src/packages.conf`) en respectant le format :
 ```
 TYPE|NOM_MAC|NOM_WINDOWS|DESCRIPTION
 ```
@@ -163,7 +197,7 @@ Exemples :
 
 ### Méthode 2 : Utiliser le gestionnaire d'applications ([src/app.sh](src/app.sh))
 
-Installer une application et l'ajouter automatiquement à [src/packages.conf](src/packages.conf) :
+Installer une application et l'ajouter automatiquement à packages.conf :
 ```bash
 bash src/app.sh install firefox
 bash src/app.sh install vlc
@@ -174,20 +208,20 @@ Le processus `install` effectue automatiquement :
 1. ✓ Vérification de la disponibilité via les API (Homebrew, Chocolatey)
 2. ✓ Installation sur la plateforme actuelle
 3. ✓ Détection automatique de la disponibilité sur les autres plateformes
-4. ✓ Remplissage complet de [src/packages.conf](src/packages.conf) avec les infos correctes
+4. ✓ Remplissage complet de packages.conf avec les infos correctes
 
-Désinstaller une application et la supprimer de [src/packages.conf](src/packages.conf) :
+Désinstaller une application et la supprimer de packages.conf :
 ```bash
 bash src/app.sh uninstall firefox
 bash src/app.sh uninstall vlc
 ```
 
-Ajouter une application à [src/packages.conf](src/packages.conf) sans l'installer :
+Ajouter une application à packages.conf sans l'installer :
 ```bash
 bash src/app.sh add firefox
 ```
 
-Supprimer une application de [src/packages.conf](src/packages.conf) sans la désinstaller :
+Supprimer une application de packages.conf sans la désinstaller :
 ```bash
 bash src/app.sh remove firefox
 ```
@@ -223,6 +257,9 @@ cp .env.example .env.local
 ```bash
 # Dotfiles
 SYNC_DIR="$HOME/OneDrive/dotfiles"
+
+# Packages personnalisés
+PACKAGES_CONF_DIR="$HOME/OneDrive/ok_computer"
 
 # Obsidian (optionnel)
 OBSIDIAN_VAULT="$HOME/OneDrive/Obsidian"
@@ -263,6 +300,23 @@ Lister les dotfiles suivis :
 bash src/dotfiles.sh list
 ```
 
+### Gestion de packages.conf
+
+Synchroniser votre liste de packages personnalisée :
+```bash
+bash src/dotfiles.sh packages sync
+```
+
+Restaurer votre liste de packages :
+```bash
+bash src/dotfiles.sh packages restore
+```
+
+Voir le statut :
+```bash
+bash src/dotfiles.sh packages status
+```
+
 ### Gestion d'Obsidian
 
 Synchroniser votre vault Obsidian :
@@ -300,6 +354,7 @@ bash src/dotfiles.sh vscode status
 ### Dotfiles suivis
 
 Les fichiers suivants sont synchronisés :
+- `packages.conf` (liste personnalisée des applications)
 - `.bashrc`, `.zshrc` (configurations shell)
 - `.gitconfig`, `.git-credentials` (configuration Git)
 - `.vimrc`, `.config/nvim` (configuration éditeurs)

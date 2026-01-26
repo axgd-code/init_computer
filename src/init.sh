@@ -1,7 +1,26 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PACKAGES_CONF="${SCRIPT_DIR}/packages.conf"
+
+# Charger .env.local si disponible
+if [ -f "${SCRIPT_DIR}/../.env.local" ]; then
+    # shellcheck disable=SC1091
+    source "${SCRIPT_DIR}/../.env.local"
+fi
+
+# Déterminer le chemin du fichier packages.conf
+# Priorité : PACKAGES_CONF_DIR > local > example
+if [ -n "${PACKAGES_CONF_DIR:-}" ] && [ -f "${PACKAGES_CONF_DIR}/packages.conf" ]; then
+    PACKAGES_CONF="${PACKAGES_CONF_DIR}/packages.conf"
+    echo "Utilisation de packages.conf synchronisé: ${PACKAGES_CONF}"
+elif [ -f "${SCRIPT_DIR}/packages.conf" ]; then
+    PACKAGES_CONF="${SCRIPT_DIR}/packages.conf"
+else
+    PACKAGES_CONF="${SCRIPT_DIR}/packages.conf.example"
+    echo "Utilisation de packages.conf.example (créez .env.local pour personnaliser)"
+fi
+
+export PACKAGES_CONF
 
 run_wifi_import() {
     if [ -z "${WIFI_KDBX_DB:-}" ]; then

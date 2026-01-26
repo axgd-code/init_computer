@@ -1,5 +1,6 @@
 # Configuration locale
 .env.local
+src/packages.conf
 
 # Build artifacts
 /dist/

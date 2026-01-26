@@ -1,7 +1,21 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PACKAGES_CONF="${SCRIPT_DIR}/packages.conf"
+
+# Charger .env.local si disponible
+if [ -f "${SCRIPT_DIR}/../.env.local" ]; then
+    # shellcheck disable=SC1091
+    source "${SCRIPT_DIR}/../.env.local"
+fi
+
+# Déterminer le chemin du fichier packages.conf
+if [ -n "${PACKAGES_CONF_DIR:-}" ] && [ -f "${PACKAGES_CONF_DIR}/packages.conf" ]; then
+    PACKAGES_CONF="${PACKAGES_CONF_DIR}/packages.conf"
+elif [ -f "${SCRIPT_DIR}/packages.conf" ]; then
+    PACKAGES_CONF="${SCRIPT_DIR}/packages.conf"
+else
+    PACKAGES_CONF="${SCRIPT_DIR}/packages.conf.example"
+fi
 
 echo "Configuration de Windows..."
 

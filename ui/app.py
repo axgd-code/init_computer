@@ -3,6 +3,8 @@ from dotenv import load_dotenv, set_key
 import os
 import requests
 from pathlib import Path
+import multiprocessing
+import socket
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 ENV_LOCAL = BASE_DIR / '.env.local'
@@ -172,5 +174,23 @@ def api_search():
 def static_files(p):
     return send_from_directory(os.path.join(os.path.dirname(__file__),'static'), p)
 
+def is_port_in_use(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
+
 if __name__=='__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    multiprocessing.freeze_support()
+    
+    port = int(os.environ.get('PORT', 5000))
+    if is_port_in_use(port):
+        print(f" * Port {port} is in use. Trying to find another port...")
+        if port == 5000:
+            port = 5001
+        while is_port_in_use(port):
+            port += 1
+            if port > 5010: # Limit searches
+                break
+    
+    debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    print(f" * Starting server on http://localhost:{port} (debug={debug})")
+    app.run(host='0.0.0.0', port=port, debug=debug)

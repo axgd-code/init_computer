@@ -24,6 +24,8 @@ esac
 python -m PyInstaller --name "$NAME" --onefile \
   --add-data "templates${SEP}templates" \
   --add-data "static${SEP}static" \
+  --collect-submodules flask \
+  --hidden-import socket \
   app.py
 
 echo "Built: dist/$NAME"
